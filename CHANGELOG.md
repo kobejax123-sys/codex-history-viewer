@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.13.1] - 2026-09-01
+
+### Changed
+
+- Reduced history rebuild and refresh file I/O: session meta, last-activity, and leading preview messages are now collected in a single read pass instead of three separate reads.
+- Session analysis now reuses the single timeline scan instead of re-reading the same session JSONL a second time for the analysis index.
+
 ## [2.13.0] - 2026-09-01
 
 ### Added

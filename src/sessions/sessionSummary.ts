@@ -203,21 +203,41 @@ function extractClaudeRenameTitle(obj: any): string | undefined {
   return undefined;
 }
 
-async function readSessionActivityInfo(
+interface SessionFileScan {
+  meta: SessionMetaInfo | null;
+  lastActivityTimestampIso?: string;
+  nativeTitle?: string;
+  previewMessages: PreviewMessage[];
+}
+
+// Single-pass scan of a session JSONL. Instead of opening the same file once for
+// the meta row (leading window), once for the last-activity timestamp (which
+// requires reading to the end), and once for the leading preview messages, scan
+// it a single time and collect all three in one pass. Codex and Claude record
+// rows are mutually exclusive, so the codex/claude timestamp extractors can be
+// probed together without knowing the session source in advance.
+async function readSessionSummaryParts(
   fsPath: string,
-  source: SessionSource,
-): Promise<{ lastActivityTimestampIso?: string; nativeTitle?: string }> {
+  previewMaxMessages: number,
+): Promise<SessionFileScan> {
+  const pastedPromptResolver = await createClaudePastedPromptResolver(fsPath);
   const stream = fs.createReadStream(fsPath, { encoding: "utf8" });
   const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
 
+  const claudeMeta: SessionMetaInfo = { historySource: "claude" };
+  let codexMeta: SessionMetaInfo | null = null;
+  let scanned = 0;
   let lastTimestampIso: string | undefined;
   let claudeCustomTitle: string | undefined;
   let claudeAiTitle: string | undefined;
   let claudeSummaryTitle: string | undefined;
   let claudeRenameTitle: string | undefined;
+  const previewMessages: PreviewMessage[] = [];
+
   try {
     for await (const line of rl) {
       if (!line) continue;
+      scanned += 1;
 
       let obj: any;
       try {
@@ -226,25 +246,92 @@ async function readSessionActivityInfo(
         continue;
       }
 
+      // ---- meta (only within the leading scan window) ----
+      if (!codexMeta && scanned <= META_SCAN_LINE_LIMIT) {
+        if (obj?.type === "session_meta" && obj?.payload && typeof obj.payload === "object") {
+          const payload = obj.payload as Record<string, unknown>;
+          const codexAgent = extractCodexAgentMetadata(payload.source);
+          const codexFork = extractCodexForkMetadata(payload);
+          codexMeta = {
+            id: typeof payload.id === "string" ? payload.id : undefined,
+            timestampIso: typeof payload.timestamp === "string" ? payload.timestamp : undefined,
+            cwd: typeof payload.cwd === "string" ? payload.cwd : undefined,
+            originator: typeof payload.originator === "string" ? payload.originator : undefined,
+            cliVersion: typeof payload.cli_version === "string" ? payload.cli_version : undefined,
+            modelProvider: typeof payload.model_provider === "string" ? payload.model_provider : undefined,
+            source: typeof payload.source === "string" ? payload.source : undefined,
+            historySource: "codex",
+            ...(codexAgent ? { codexAgent } : {}),
+            ...(codexFork ? { codexFork } : {}),
+          };
+        } else {
+          if (!claudeMeta.id && typeof obj?.sessionId === "string") claudeMeta.id = obj.sessionId;
+          if (!claudeMeta.timestampIso && typeof obj?.timestamp === "string") claudeMeta.timestampIso = obj.timestamp;
+          if (!claudeMeta.cwd && typeof obj?.cwd === "string") claudeMeta.cwd = obj.cwd;
+          if (!claudeMeta.cliVersion && typeof obj?.version === "string") claudeMeta.cliVersion = obj.version;
+          if (!claudeMeta.source) claudeMeta.source = "claude-vscode";
+        }
+      }
+
+      // ---- last-activity timestamp + Claude title candidates ----
       const timestampIso =
-        source === "claude"
-          ? extractClaudeActivityTimestampIso(obj)
-          : extractCodexActivityTimestampIso(obj);
+        extractCodexActivityTimestampIso(obj) ?? extractClaudeActivityTimestampIso(obj);
       if (timestampIso) lastTimestampIso = timestampIso;
 
-      if (source === "claude") {
-        const customTitle = extractClaudeCustomTitle(obj);
-        if (customTitle) claudeCustomTitle = customTitle;
+      const customTitle = extractClaudeCustomTitle(obj);
+      if (customTitle) claudeCustomTitle = customTitle;
+      const aiTitle = extractClaudeAiTitle(obj);
+      if (aiTitle) claudeAiTitle = aiTitle;
+      const summaryTitle = extractClaudeSummaryTitle(obj);
+      if (summaryTitle) claudeSummaryTitle = summaryTitle;
+      const renameTitle = extractClaudeRenameTitle(obj);
+      if (renameTitle) claudeRenameTitle = renameTitle;
 
-        const aiTitle = extractClaudeAiTitle(obj);
-        if (aiTitle) claudeAiTitle = aiTitle;
+      // ---- preview messages (until previewMaxMessages) ----
+      if (previewMessages.length >= previewMaxMessages) continue;
 
-        const summaryTitle = extractClaudeSummaryTitle(obj);
-        if (summaryTitle) claudeSummaryTitle = summaryTitle;
+      if (obj?.type === "response_item" && obj?.payload?.type === "message") {
+        const role = obj?.payload?.role;
+        if (role !== "user" && role !== "assistant") continue;
 
-        const renameTitle = extractClaudeRenameTitle(obj);
-        if (renameTitle) claudeRenameTitle = renameTitle;
+        const content = obj?.payload?.content;
+        if (role === "user" && isCodexProtocolContextContent(content)) continue;
+        const extracted = await extractCodexMessageContent(content, undefined, { enabled: false });
+        const cleanText = normalizeWhitespace(extracted.text);
+        const attachmentSummary = buildPreviewAttachmentText(extracted.attachments);
+        const textNormalized = normalizeWhitespace([cleanText, attachmentSummary].filter(Boolean).join("\n"));
+        if (!textNormalized) continue;
+        const userText =
+          role === "user"
+            ? extractCodexCompactUserText(content, cleanText) ?? (attachmentSummary || null)
+            : null;
+        if (role === "user" && !userText) continue;
+        const text = role === "user" ? userText! : textNormalized;
+
+        const trimmed = text.length > 1200 ? `${text.slice(0, 1199)}...` : text;
+        previewMessages.push({ role, text: trimmed });
+        continue;
       }
+
+      const role = detectClaudeMessageRole(obj);
+      if (!role) continue;
+      if (isClaudeCrossSessionInboundRecord(obj)) continue;
+
+      const rawContent = getClaudeMessageContent(obj);
+      const pastedPrompt = role === "user" ? await pastedPromptResolver?.resolve(obj, rawContent) : undefined;
+      const controlContent = selectClaudeControlContent(rawContent, pastedPrompt);
+      if (role === "user" && extractClaudeLocalCommandOutputContent(controlContent)) continue;
+      const extracted = await extractClaudeMessageContent(rawContent, undefined, { enabled: false }, { role, pastedPrompt });
+      const attachmentSummary = buildPreviewAttachmentText(extracted.attachments);
+      const textRaw = [buildClaudePreviewText(extracted.text), attachmentSummary].filter(Boolean).join("\n");
+      const textNormalized = normalizeWhitespace(textRaw);
+      if (!textNormalized) continue;
+      const userText = role === "user" ? extractCompactUserText(textNormalized) : null;
+      if (role === "user" && !userText) continue;
+      const text = role === "user" ? userText! : textNormalized;
+
+      const trimmed = text.length > 1200 ? `${text.slice(0, 1199)}...` : text;
+      previewMessages.push({ role, text: trimmed });
     }
   } finally {
     rl.close();
@@ -252,11 +339,12 @@ async function readSessionActivityInfo(
   }
 
   return {
+    meta:
+      codexMeta ??
+      (claudeMeta.id || claudeMeta.timestampIso || claudeMeta.cwd ? claudeMeta : null),
     lastActivityTimestampIso: lastTimestampIso,
-    nativeTitle:
-      source === "claude"
-        ? claudeCustomTitle ?? claudeAiTitle ?? claudeRenameTitle ?? claudeSummaryTitle
-        : undefined,
+    nativeTitle: claudeCustomTitle ?? claudeAiTitle ?? claudeRenameTitle ?? claudeSummaryTitle,
+    previewMessages,
   };
 }
 
@@ -351,7 +439,8 @@ export async function buildSessionSummary(params: {
   if (!stat) return null;
 
   const cacheKey = normalizeCacheKey(fsPath);
-  const readMeta = (await tryReadSessionMeta(fsPath)) ?? {};
+  const parts = await readSessionSummaryParts(fsPath, previewMaxMessages);
+  const readMeta = parts.meta ?? {};
   const source = detectSessionSource(readMeta, fsPath);
   const storage: SessionStorageLocation =
     params.storage ??
@@ -360,8 +449,7 @@ export async function buildSessionSummary(params: {
       : { rootKind: "codexSessions", archiveState: "active", rootPath: sourceRoot });
   const meta: SessionMetaInfo = { ...readMeta, historySource: source };
   const identityKey = resolveSessionIdentityKey(source, meta, fsPath, cacheKey);
-  const activityInfo = await readSessionActivityInfo(fsPath, source);
-  const lastActivityIso = activityInfo.lastActivityTimestampIso;
+  const lastActivityIso = parts.lastActivityTimestampIso;
 
   const inferred = source === "codex" ? inferYmdFromPath(sourceRoot, fsPath) ?? undefined : undefined;
   const startValid = parseTimestampDate(meta.timestampIso);
@@ -395,7 +483,7 @@ export async function buildSessionSummary(params: {
       ? toTimeLabel(startValid, timeZone)
       : "--:--";
 
-  const previewMessages = await readPreviewMessages(fsPath, previewMaxMessages);
+  const previewMessages = parts.previewMessages;
   const snippetSource = resolvePreviewSessionTitleCandidate(previewMessages);
   const snippet = snippetSource ? singleLineSnippet(snippetSource, 70) : path.basename(fsPath);
   const cwdShort = meta.cwd ? safeDisplayPath(meta.cwd, 80) : "";
@@ -417,7 +505,7 @@ export async function buildSessionSummary(params: {
     localDate: startedLocalDate,
     timeLabel: startedTimeLabel,
     snippet,
-    nativeTitle: activityInfo.nativeTitle,
+    nativeTitle: parts.nativeTitle,
     displayTitle: snippet,
     cwdShort,
     previewMessages,

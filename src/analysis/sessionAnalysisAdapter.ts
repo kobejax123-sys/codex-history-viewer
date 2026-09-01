@@ -3,6 +3,7 @@ import * as path from "node:path";
 import * as readline from "node:readline";
 import {
   buildChatSessionModel,
+  type ChatTimelineLineRecord,
 } from "../chat/chatModelBuilder";
 import {
   detectClaudeMaterializedMessageRole,
@@ -179,12 +180,21 @@ export async function analyzeSessionFile(input: SessionAnalysisAdapterInput): Pr
   const { session } = input;
   const warnings: string[] = [];
   try {
-    const model = await buildChatSessionModel(session.fsPath, {
-      includeDetails: false,
-      turnTimelineMode: "basic",
-      images: { enabled: false, maxSizeMB: 1, thumbnailSize: "small" },
-    });
-    const scan = await scanJsonl(session.fsPath, session.source === "claude", session.meta.cwd);
+    const scanCollector = await createJsonlScanCollector(
+      session.fsPath,
+      session.source === "claude",
+      session.meta.cwd,
+    );
+    const model = await buildChatSessionModel(
+      session.fsPath,
+      {
+        includeDetails: false,
+        turnTimelineMode: "basic",
+        images: { enabled: false, maxSizeMB: 1, thumbnailSize: "small" },
+      },
+      (record) => scanCollector.consume(record),
+    );
+    const scan = scanCollector.result();
     if (scan.malformedLineCount > 0) warnings.push(`malformedLines:${scan.malformedLineCount}`);
     if (scan.claudeGraphRecordsTruncated) warnings.push("claudeGraphRecordLimitReached");
     if (scan.claudeGraphIdentifierInvalid) warnings.push("graphIdentifierInvalid");
@@ -751,10 +761,23 @@ function normalizeRateLimitValue(
     : { invalidValue };
 }
 
-async function scanJsonl(fsPath: string, collectClaudeRecords: boolean, sessionCwd?: string): Promise<JsonlScanResult> {
+interface JsonlScanCollector {
+  consume(record: ChatTimelineLineRecord): Promise<void>;
+  result(): JsonlScanResult;
+}
+
+// A per-record collector that mirrors the previous whole-file scanJsonl pass.
+// It is fed by the same single JSONL traversal that builds the chat timeline
+// model (via the buildChatSessionModel onRecord hook), so the file is no longer
+// opened separately for analysis collection. The lineIndex supplied by the
+// timeline traversal equals the 1-based raw line ordinal that scanJsonl used
+// (blank rows are counted but skipped, matching the old `!line.trim()` guard).
+async function createJsonlScanCollector(
+  fsPath: string,
+  collectClaudeRecords: boolean,
+  sessionCwd?: string,
+): Promise<JsonlScanCollector> {
   const pastedPromptResolver = collectClaudeRecords ? await createClaudePastedPromptResolver(fsPath) : undefined;
-  const stream = fs.createReadStream(fsPath, { encoding: "utf8" });
-  const reader = readline.createInterface({ input: stream, crlfDelay: Infinity });
   let malformedLineCount = 0;
   let invalidTimestamp = false;
   let latestCodexCumulativeUsage: ChatTokenUsage | undefined;
@@ -763,44 +786,39 @@ async function scanJsonl(fsPath: string, collectClaudeRecords: boolean, sessionC
   let claudeGraphRecordsTruncated = false;
   let claudeGraphIdentifierInvalid = false;
   const claudeRecords: RawClaudeRecord[] = [];
-  let recordOrdinal = 0;
-  try {
-    for await (const line of reader) {
-      recordOrdinal += 1;
-      if (!line.trim()) continue;
-      let obj: any;
-      try {
-        obj = JSON.parse(line);
-      } catch {
+  return {
+    async consume(record) {
+      if (record.blank) return;
+      if (record.obj === null) {
         malformedLineCount += 1;
-        continue;
+        return;
       }
+      const obj = record.obj as any;
       if (hasInvalidRawTimestamp(obj)) invalidTimestamp = true;
       const cumulative = extractTokenUsage(obj?.payload?.info?.total_token_usage);
       if (cumulative) latestCodexCumulativeUsage = cumulative;
-      if (!collectClaudeRecords) continue;
+      if (!collectClaudeRecords) return;
       if (obj?.isSidechain === true) observedSidechainTrue = true;
       else if (obj?.isSidechain === false) observedSidechainFalse = true;
       if (claudeRecords.length >= MAX_GRAPH_RECORDS) {
         claudeGraphRecordsTruncated = true;
-        continue;
+        return;
       }
-      const builtRecord = await buildRawClaudeRecord(obj, recordOrdinal, sessionCwd, pastedPromptResolver);
+      const builtRecord = await buildRawClaudeRecord(obj, record.lineIndex, sessionCwd, pastedPromptResolver);
       if (builtRecord.invalidGraphIdentifier) claudeGraphIdentifierInvalid = true;
       claudeRecords.push(builtRecord.record);
-    }
-  } finally {
-    reader.close();
-    stream.close();
-  }
-  return {
-    malformedLineCount,
-    invalidTimestamp,
-    ...(latestCodexCumulativeUsage ? { latestCodexCumulativeUsage } : {}),
-    claudeRecords,
-    claudeGraphRecordsTruncated,
-    claudeGraphIdentifierInvalid,
-    claudeSidechainState: observedSidechainTrue ? true : observedSidechainFalse ? false : "unknown",
+    },
+    result() {
+      return {
+        malformedLineCount,
+        invalidTimestamp,
+        ...(latestCodexCumulativeUsage ? { latestCodexCumulativeUsage } : {}),
+        claudeRecords,
+        claudeGraphRecordsTruncated,
+        claudeGraphIdentifierInvalid,
+        claudeSidechainState: observedSidechainTrue ? true : observedSidechainFalse ? false : "unknown",
+      };
+    },
   };
 }
 

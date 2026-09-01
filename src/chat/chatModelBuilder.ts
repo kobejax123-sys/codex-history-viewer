@@ -71,6 +71,14 @@ export interface ChatSessionModelBuildOptions {
   turnTimelineMode?: ChatTurnTimelineMode;
 }
 
+export interface ChatTimelineLineRecord {
+  lineIndex: number;
+  obj: any | null;
+  blank: boolean;
+}
+
+export type ChatTimelineRecordHandler = (record: ChatTimelineLineRecord) => void | Promise<void>;
+
 export interface ChatPatchEntryDetailTarget {
   entryId: string;
   callId?: string;
@@ -92,9 +100,10 @@ interface ChatTimelineBuildResult {
 export async function buildChatSessionModel(
   fsPath: string,
   options: ChatSessionModelBuildOptions = {},
+  onRecord?: ChatTimelineRecordHandler,
 ): Promise<ChatSessionModel> {
   const meta = await readSessionMeta(fsPath);
-  const timeline = await readTimelineItems(fsPath, meta.cwd, options);
+  const timeline = await readTimelineItems(fsPath, meta.cwd, options, onRecord);
   return {
     fsPath,
     meta,
@@ -135,6 +144,7 @@ async function readTimelineItems(
   fsPath: string,
   sessionCwd: string | undefined,
   options: ChatSessionModelBuildOptions,
+  onRecord?: ChatTimelineRecordHandler,
 ): Promise<ChatTimelineBuildResult> {
   const pastedPromptResolver = await createClaudePastedPromptResolver(fsPath);
   const stream = fs.createReadStream(fsPath, { encoding: "utf8" });
@@ -155,13 +165,18 @@ async function readTimelineItems(
   try {
     for await (const line of rl) {
       lineIndex += 1;
-      if (!line) continue;
+      if (!line.trim()) {
+        onRecord?.({ lineIndex, obj: null, blank: true });
+        continue;
+      }
       let obj: any;
       try {
         obj = JSON.parse(line);
       } catch {
+        onRecord?.({ lineIndex, obj: null, blank: false });
         continue;
       }
+      await onRecord?.({ lineIndex, obj, blank: false });
 
       flushPendingClaudeUsageIfNeeded(obj, items, usageState);
       appendEnvironmentSnapshotIfChanged(obj, items, environmentState, () => messageIndex, () => turnState?.activeTurnId);
