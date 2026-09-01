@@ -2,16 +2,25 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
+// Languages that are compared against the English source. `en` is the base.
+const languages = ["en", "ja", "zh"];
+
 const targetPairs = [
   {
     name: "runtime",
-    en: "l10n/bundle.l10n.json",
-    ja: "l10n/bundle.l10n.ja.json",
+    files: {
+      en: "l10n/bundle.l10n.json",
+      ja: "l10n/bundle.l10n.ja.json",
+      zh: "l10n/bundle.l10n.zh.json",
+    },
   },
   {
     name: "manifest",
-    en: "package.nls.json",
-    ja: "package.nls.ja.json",
+    files: {
+      en: "package.nls.json",
+      ja: "package.nls.ja.json",
+      zh: "package.nls.zh.json",
+    },
   },
 ];
 
@@ -26,7 +35,7 @@ let failed = false;
 const bundles = new Map();
 
 for (const pair of targetPairs) {
-  for (const rel of [pair.en, pair.ja]) {
+  for (const rel of Object.values(pair.files)) {
     const full = path.join(process.cwd(), rel);
     if (!fs.existsSync(full)) {
       failed = true;
@@ -77,35 +86,41 @@ function placeholderSignature(value) {
 }
 
 for (const pair of targetPairs) {
-  const enBundle = bundles.get(pair.en);
-  const jaBundle = bundles.get(pair.ja);
-  if (!enBundle || !jaBundle) continue;
+  const enBundle = bundles.get(pair.files.en);
+  if (!enBundle) continue;
 
   const enKeys = Object.keys(enBundle);
-  const jaKeys = Object.keys(jaBundle);
   const enKeySet = new Set(enKeys);
-  const jaKeySet = new Set(jaKeys);
 
-  for (const key of enKeys) {
-    if (!jaKeySet.has(key)) {
-      failed = true;
-      console.error(`[check:l10n] Missing Japanese key (${pair.name}): ${key}`);
-      continue;
-    }
-    const enSignature = placeholderSignature(enBundle[key]);
-    const jaSignature = placeholderSignature(jaBundle[key]);
-    if (enSignature !== jaSignature) {
-      failed = true;
-      console.error(
-        `[check:l10n] Placeholder mismatch (${pair.name}): ${key} (en: ${enSignature || "none"}, ja: ${jaSignature || "none"})`,
-      );
-    }
-  }
+  for (const lang of languages) {
+    if (lang === "en") continue;
+    const langBundle = bundles.get(pair.files[lang]);
+    if (!langBundle) continue;
 
-  for (const key of jaKeys) {
-    if (enKeySet.has(key)) continue;
-    failed = true;
-    console.error(`[check:l10n] Missing English key (${pair.name}): ${key}`);
+    const langKeys = Object.keys(langBundle);
+    const langKeySet = new Set(langKeys);
+
+    for (const key of enKeys) {
+      if (!langKeySet.has(key)) {
+        failed = true;
+        console.error(`[check:l10n] Missing ${lang} key (${pair.name}): ${key}`);
+        continue;
+      }
+      const enSignature = placeholderSignature(enBundle[key]);
+      const langSignature = placeholderSignature(langBundle[key]);
+      if (enSignature !== langSignature) {
+        failed = true;
+        console.error(
+          `[check:l10n] Placeholder mismatch (${pair.name}): ${key} (en: ${enSignature || "none"}, ${lang}: ${langSignature || "none"})`,
+        );
+      }
+    }
+
+    for (const key of langKeys) {
+      if (enKeySet.has(key)) continue;
+      failed = true;
+      console.error(`[check:l10n] Missing English key (${pair.name}): ${key}`);
+    }
   }
 }
 

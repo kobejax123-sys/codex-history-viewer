@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-type UiLanguageSetting = "auto" | "en" | "ja";
+type UiLanguageSetting = "auto" | "en" | "ja" | "zh";
 type ResolvedUiLanguage = Exclude<UiLanguageSetting, "auto">;
 
 type L10nBundle = Record<string, string>;
@@ -12,20 +12,22 @@ const bundleCache: Partial<Record<Exclude<UiLanguageSetting, "auto">, L10nBundle
 function readUiLanguageSetting(): UiLanguageSetting {
   const cfg = vscode.workspace.getConfiguration("codexHistoryViewer");
   const raw = (cfg.get<string>("ui.language") ?? "auto").trim().toLowerCase();
-  if (raw === "en" || raw === "ja" || raw === "auto") return raw;
+  if (raw === "en" || raw === "ja" || raw === "zh" || raw === "auto") return raw;
   return "auto";
 }
 
 export function resolveUiLanguage(setting: UiLanguageSetting = readUiLanguageSetting()): ResolvedUiLanguage {
-  if (setting === "en" || setting === "ja") return setting;
+  if (setting === "en" || setting === "ja" || setting === "zh") return setting;
 
   const envLang = typeof vscode.env.language === "string" ? vscode.env.language.trim().toLowerCase() : "";
+  if (envLang.startsWith("zh")) return "zh";
   if (envLang.startsWith("ja")) return "ja";
   return "en";
 }
 
 function readBundleFile(lang: Exclude<UiLanguageSetting, "auto">): L10nBundle | null {
-  const fileName = lang === "ja" ? "bundle.l10n.ja.json" : "bundle.l10n.json";
+  const fileName =
+    lang === "ja" ? "bundle.l10n.ja.json" : lang === "zh" ? "bundle.l10n.zh.json" : "bundle.l10n.json";
   const filePath = path.join(__dirname, "..", "l10n", fileName);
   try {
     const raw = fs.readFileSync(filePath, { encoding: "utf8" });
@@ -62,7 +64,7 @@ function formatPlaceholders(template: string, args: Array<string | number | bool
 export function t(key: string, ...args: Array<string | number | boolean>): string {
   const lang = resolveUiLanguage();
   const primary = getBundle(lang);
-  const fallback = lang === "ja" ? getBundle("en") : null;
+  const fallback = lang !== "en" ? getBundle("en") : null;
   const template = primary?.[key] ?? fallback?.[key];
   if (typeof template === "string") return formatPlaceholders(template, args);
 

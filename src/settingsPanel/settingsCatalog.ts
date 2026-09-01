@@ -123,7 +123,7 @@ const CLAUDE_SOURCE = includesSource("claude");
 
 export const SETTINGS_DEFINITIONS: readonly SettingsDefinition[] = [
   definition("ui.language", "general", "general.display", "select", "application", "auto", {
-    options: ["auto", "ja", "en"].map((value) => option("ui.language", value))
+    options: ["auto", "ja", "en", "zh"].map((value) => option("ui.language", value))
   }),
   definition("delete.useTrash", "general", "general.safety", "switch", "application", true),
   definition("webview.restoreAfterReload", "general", "general.startup", "switch", "window", false, {

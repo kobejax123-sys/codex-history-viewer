@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.13.0] - 2026-09-01
+
+### Added
+
+- Added Simplified Chinese localization. `codexHistoryViewer.ui.language` now supports `zh`, with full translation of runtime strings, the three webviews, 150 `ui.zh.*` menu commands, 8 language-specific submenus, and tri-state menu switching (`ja` / `zh` / `en`).
+- Added a `check:zh-sync` script to verify `ui.zh` command, menu, and submenu parity for future upstream updates.
+
+### Fixed
+
+- Fixed the Settings page rendering blank when `codexHistoryViewer.ui.language = zh`, by accepting `zh` in the settings-panel snapshot language validation.
+
 ## [2.12.0] - 2026-08-28
 
 ### Added

@@ -7796,7 +7796,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       "AllChecked",
     ] as const;
     for (const suffix of suffixes) {
-      for (const language of ["ja", "en"] as const) {
+      for (const language of ["ja", "en", "zh"] as const) {
         registerUiCommandAlias(
           `codexHistoryViewer.ui.${language}.${aliasPrefix}${suffix}`,
           `codexHistoryViewer.${targetPrefix}${suffix}`,
@@ -7810,14 +7810,19 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   registerUiCommandAlias("codexHistoryViewer.ui.ja.openSession", "codexHistoryViewer.openSession");
   registerUiCommandAlias("codexHistoryViewer.ui.en.openSession", "codexHistoryViewer.openSession");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.openSession", "codexHistoryViewer.openSession");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.showHistoryInsights", "codexHistoryViewer.showHistoryInsights");
   registerUiCommandAlias("codexHistoryViewer.ui.en.showHistoryInsights", "codexHistoryViewer.showHistoryInsights");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.showHistoryInsights", "codexHistoryViewer.showHistoryInsights");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.openCodexAgentParent", "codexHistoryViewer.openCodexAgentParent");
   registerUiCommandAlias("codexHistoryViewer.ui.en.openCodexAgentParent", "codexHistoryViewer.openCodexAgentParent");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.openCodexAgentParent", "codexHistoryViewer.openCodexAgentParent");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.openSessionMarkdown", "codexHistoryViewer.openSessionMarkdown");
   registerUiCommandAlias("codexHistoryViewer.ui.en.openSessionMarkdown", "codexHistoryViewer.openSessionMarkdown");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.openSessionMarkdown", "codexHistoryViewer.openSessionMarkdown");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.copySessionId", "codexHistoryViewer.copySessionId");
   registerUiCommandAlias("codexHistoryViewer.ui.en.copySessionId", "codexHistoryViewer.copySessionId");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.copySessionId", "codexHistoryViewer.copySessionId");
   registerUiCommandAlias(
     "codexHistoryViewer.ui.ja.copySessionFilePath",
     "codexHistoryViewer.copySessionFilePath",
@@ -7826,44 +7831,68 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     "codexHistoryViewer.ui.en.copySessionFilePath",
     "codexHistoryViewer.copySessionFilePath",
   );
+  registerUiCommandAlias(
+    "codexHistoryViewer.ui.zh.copySessionFilePath",
+    "codexHistoryViewer.copySessionFilePath",
+  );
   registerUiCommandAlias("codexHistoryViewer.ui.ja.revealSessionFile", "codexHistoryViewer.revealSessionFile");
   registerUiCommandAlias("codexHistoryViewer.ui.en.revealSessionFile", "codexHistoryViewer.revealSessionFile");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.revealSessionFile", "codexHistoryViewer.revealSessionFile");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.resumeSessionInCodex", "codexHistoryViewer.resumeSessionInCodex");
   registerUiCommandAlias("codexHistoryViewer.ui.en.resumeSessionInCodex", "codexHistoryViewer.resumeSessionInCodex");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.resumeSessionInCodex", "codexHistoryViewer.resumeSessionInCodex");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.resumeSessionInClaude", "codexHistoryViewer.resumeSessionInClaude");
   registerUiCommandAlias("codexHistoryViewer.ui.en.resumeSessionInClaude", "codexHistoryViewer.resumeSessionInClaude");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.resumeSessionInClaude", "codexHistoryViewer.resumeSessionInClaude");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.resumeSessionInCodexCli", "codexHistoryViewer.resumeSessionInCodexCli");
   registerUiCommandAlias("codexHistoryViewer.ui.en.resumeSessionInCodexCli", "codexHistoryViewer.resumeSessionInCodexCli");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.resumeSessionInCodexCli", "codexHistoryViewer.resumeSessionInCodexCli");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.resumeSessionInClaudeCli", "codexHistoryViewer.resumeSessionInClaudeCli");
   registerUiCommandAlias("codexHistoryViewer.ui.en.resumeSessionInClaudeCli", "codexHistoryViewer.resumeSessionInClaudeCli");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.resumeSessionInClaudeCli", "codexHistoryViewer.resumeSessionInClaudeCli");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.handoffToClaude", "codexHistoryViewer.handoffToClaude");
   registerUiCommandAlias("codexHistoryViewer.ui.en.handoffToClaude", "codexHistoryViewer.handoffToClaude");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.handoffToClaude", "codexHistoryViewer.handoffToClaude");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.copyHandoffPrompt", "codexHistoryViewer.copyHandoffPrompt");
   registerUiCommandAlias("codexHistoryViewer.ui.en.copyHandoffPrompt", "codexHistoryViewer.copyHandoffPrompt");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.copyHandoffPrompt", "codexHistoryViewer.copyHandoffPrompt");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.copyHandoffPath", "codexHistoryViewer.copyHandoffPath");
   registerUiCommandAlias("codexHistoryViewer.ui.en.copyHandoffPath", "codexHistoryViewer.copyHandoffPath");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.copyHandoffPath", "codexHistoryViewer.copyHandoffPath");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.createHandoffFile", "codexHistoryViewer.createHandoffFile");
   registerUiCommandAlias("codexHistoryViewer.ui.en.createHandoffFile", "codexHistoryViewer.createHandoffFile");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.createHandoffFile", "codexHistoryViewer.createHandoffFile");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.openSessionHandoff", "codexHistoryViewer.openSessionHandoff");
   registerUiCommandAlias("codexHistoryViewer.ui.en.openSessionHandoff", "codexHistoryViewer.openSessionHandoff");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.openSessionHandoff", "codexHistoryViewer.openSessionHandoff");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.promoteSession", "codexHistoryViewer.promoteSession");
   registerUiCommandAlias("codexHistoryViewer.ui.en.promoteSession", "codexHistoryViewer.promoteSession");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.promoteSession", "codexHistoryViewer.promoteSession");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.restoreArchivedSession", "codexHistoryViewer.restoreArchivedSession");
   registerUiCommandAlias("codexHistoryViewer.ui.en.restoreArchivedSession", "codexHistoryViewer.restoreArchivedSession");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.restoreArchivedSession", "codexHistoryViewer.restoreArchivedSession");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.archiveSession", "codexHistoryViewer.archiveSession");
   registerUiCommandAlias("codexHistoryViewer.ui.en.archiveSession", "codexHistoryViewer.archiveSession");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.archiveSession", "codexHistoryViewer.archiveSession");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.archiveLocationActiveOnly", "codexHistoryViewer.filterArchiveLocation");
   registerUiCommandAlias("codexHistoryViewer.ui.en.archiveLocationActiveOnly", "codexHistoryViewer.filterArchiveLocation");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.archiveLocationActiveOnly", "codexHistoryViewer.filterArchiveLocation");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.archiveLocationAll", "codexHistoryViewer.filterArchiveLocation");
   registerUiCommandAlias("codexHistoryViewer.ui.en.archiveLocationAll", "codexHistoryViewer.filterArchiveLocation");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.archiveLocationAll", "codexHistoryViewer.filterArchiveLocation");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.archiveLocationArchivedOnly", "codexHistoryViewer.filterArchiveLocation");
   registerUiCommandAlias("codexHistoryViewer.ui.en.archiveLocationArchivedOnly", "codexHistoryViewer.filterArchiveLocation");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.archiveLocationArchivedOnly", "codexHistoryViewer.filterArchiveLocation");
   registerUiCommandAlias(
     "codexHistoryViewer.ui.ja.historyDisplayTargetHiddenAllLocations",
     "codexHistoryViewer.filterHistoryDisplayTarget",
   );
   registerUiCommandAlias(
     "codexHistoryViewer.ui.en.historyDisplayTargetHiddenAllLocations",
+    "codexHistoryViewer.filterHistoryDisplayTarget",
+  );
+  registerUiCommandAlias(
+    "codexHistoryViewer.ui.zh.historyDisplayTargetHiddenAllLocations",
     "codexHistoryViewer.filterHistoryDisplayTarget",
   );
   registerUiCommandAlias(
@@ -7874,18 +7903,29 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     "codexHistoryViewer.ui.en.historyDisplayTargetAll",
     "codexHistoryViewer.filterHistoryDisplayTarget",
   );
+  registerUiCommandAlias(
+    "codexHistoryViewer.ui.zh.historyDisplayTargetAll",
+    "codexHistoryViewer.filterHistoryDisplayTarget",
+  );
   registerUiCommandAlias("codexHistoryViewer.ui.ja.pinnedArchiveLocationActiveOnly", "codexHistoryViewer.filterPinnedArchiveLocation");
   registerUiCommandAlias("codexHistoryViewer.ui.en.pinnedArchiveLocationActiveOnly", "codexHistoryViewer.filterPinnedArchiveLocation");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.pinnedArchiveLocationActiveOnly", "codexHistoryViewer.filterPinnedArchiveLocation");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.pinnedArchiveLocationAll", "codexHistoryViewer.filterPinnedArchiveLocation");
   registerUiCommandAlias("codexHistoryViewer.ui.en.pinnedArchiveLocationAll", "codexHistoryViewer.filterPinnedArchiveLocation");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.pinnedArchiveLocationAll", "codexHistoryViewer.filterPinnedArchiveLocation");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.pinnedArchiveLocationArchivedOnly", "codexHistoryViewer.filterPinnedArchiveLocation");
   registerUiCommandAlias("codexHistoryViewer.ui.en.pinnedArchiveLocationArchivedOnly", "codexHistoryViewer.filterPinnedArchiveLocation");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.pinnedArchiveLocationArchivedOnly", "codexHistoryViewer.filterPinnedArchiveLocation");
   registerUiCommandAlias(
     "codexHistoryViewer.ui.ja.pinnedDisplayTargetHiddenAllLocations",
     "codexHistoryViewer.filterPinnedDisplayTarget",
   );
   registerUiCommandAlias(
     "codexHistoryViewer.ui.en.pinnedDisplayTargetHiddenAllLocations",
+    "codexHistoryViewer.filterPinnedDisplayTarget",
+  );
+  registerUiCommandAlias(
+    "codexHistoryViewer.ui.zh.pinnedDisplayTargetHiddenAllLocations",
     "codexHistoryViewer.filterPinnedDisplayTarget",
   );
   registerUiCommandAlias(
@@ -7896,29 +7936,43 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     "codexHistoryViewer.ui.en.pinnedDisplayTargetAll",
     "codexHistoryViewer.filterPinnedDisplayTarget",
   );
+  registerUiCommandAlias(
+    "codexHistoryViewer.ui.zh.pinnedDisplayTargetAll",
+    "codexHistoryViewer.filterPinnedDisplayTarget",
+  );
   registerUiCommandAlias("codexHistoryViewer.ui.ja.pinSession", "codexHistoryViewer.pinSession");
   registerUiCommandAlias("codexHistoryViewer.ui.en.pinSession", "codexHistoryViewer.pinSession");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.pinSession", "codexHistoryViewer.pinSession");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.unpinSession", "codexHistoryViewer.unpinSession");
   registerUiCommandAlias("codexHistoryViewer.ui.en.unpinSession", "codexHistoryViewer.unpinSession");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.unpinSession", "codexHistoryViewer.unpinSession");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.hideSessions", "codexHistoryViewer.hideSessions");
   registerUiCommandAlias("codexHistoryViewer.ui.en.hideSessions", "codexHistoryViewer.hideSessions");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.hideSessions", "codexHistoryViewer.hideSessions");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.unhideSessions", "codexHistoryViewer.unhideSessions");
   registerUiCommandAlias("codexHistoryViewer.ui.en.unhideSessions", "codexHistoryViewer.unhideSessions");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.unhideSessions", "codexHistoryViewer.unhideSessions");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.deleteSessions", "codexHistoryViewer.deleteSessions");
   registerUiCommandAlias("codexHistoryViewer.ui.en.deleteSessions", "codexHistoryViewer.deleteSessions");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.deleteSessions", "codexHistoryViewer.deleteSessions");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.refresh", "codexHistoryViewer.refresh");
   registerUiCommandAlias("codexHistoryViewer.ui.en.refresh", "codexHistoryViewer.refresh");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.refresh", "codexHistoryViewer.refresh");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.refreshPinned", "codexHistoryViewer.refreshPinned");
   registerUiCommandAlias("codexHistoryViewer.ui.en.refreshPinned", "codexHistoryViewer.refreshPinned");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.refreshPinned", "codexHistoryViewer.refreshPinned");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.refreshHistoryPane", "codexHistoryViewer.refreshHistoryPane");
   registerUiCommandAlias("codexHistoryViewer.ui.en.refreshHistoryPane", "codexHistoryViewer.refreshHistoryPane");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.refreshHistoryPane", "codexHistoryViewer.refreshHistoryPane");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.historyViewLatestCurrent", "codexHistoryViewer.toggleHistoryViewMode");
   registerUiCommandAlias("codexHistoryViewer.ui.en.historyViewLatestCurrent", "codexHistoryViewer.toggleHistoryViewMode");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.historyViewLatestCurrent", "codexHistoryViewer.toggleHistoryViewMode");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.historyViewDateCurrent", "codexHistoryViewer.toggleHistoryViewMode");
   registerUiCommandAlias("codexHistoryViewer.ui.en.historyViewDateCurrent", "codexHistoryViewer.toggleHistoryViewMode");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.historyViewDateCurrent", "codexHistoryViewer.toggleHistoryViewMode");
 
   const registerHistoryMenuAlias = (suffix: string, targetCommand: string): void => {
-    for (const lang of ["ja", "en"] as const) {
+    for (const lang of ["ja", "en", "zh"] as const) {
       registerUiCommandAlias(`codexHistoryViewer.ui.${lang}.${suffix}`, targetCommand);
       registerUiCommandAlias(`codexHistoryViewer.ui.${lang}.${suffix}Checked`, targetCommand);
     }
@@ -7945,7 +7999,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   registerHistoryMenuAlias("historyMenuSourceCodex", "codexHistoryViewer.setHistorySourceFilterCodex");
   registerHistoryMenuAlias("historyMenuSourceClaude", "codexHistoryViewer.setHistorySourceFilterClaude");
   const registerPinnedMenuSortAlias = (suffix: string, targetCommand: string): void => {
-    for (const lang of ["ja", "en"] as const) {
+    for (const lang of ["ja", "en", "zh"] as const) {
       registerUiCommandAlias(`codexHistoryViewer.ui.${lang}.${suffix}`, targetCommand);
       registerUiCommandAlias(`codexHistoryViewer.ui.${lang}.${suffix}Checked`, targetCommand);
     }
@@ -7963,30 +8017,43 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   registerPinnedMenuSortAlias("pinnedMenuSortFileSizeAsc", "codexHistoryViewer.setPinnedSortFileSizeAsc");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.refreshStatusPane", "codexHistoryViewer.refreshStatusPane");
   registerUiCommandAlias("codexHistoryViewer.ui.en.refreshStatusPane", "codexHistoryViewer.refreshStatusPane");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.refreshStatusPane", "codexHistoryViewer.refreshStatusPane");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.search", "codexHistoryViewer.search");
   registerUiCommandAlias("codexHistoryViewer.ui.en.search", "codexHistoryViewer.search");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.search", "codexHistoryViewer.search");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.searchRerun", "codexHistoryViewer.searchRerun");
   registerUiCommandAlias("codexHistoryViewer.ui.en.searchRerun", "codexHistoryViewer.searchRerun");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.searchRerun", "codexHistoryViewer.searchRerun");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.searchRunRecent", "codexHistoryViewer.searchRunRecent");
   registerUiCommandAlias("codexHistoryViewer.ui.en.searchRunRecent", "codexHistoryViewer.searchRunRecent");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.searchRunRecent", "codexHistoryViewer.searchRunRecent");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.searchManageHistory", "codexHistoryViewer.searchManageHistory");
   registerUiCommandAlias("codexHistoryViewer.ui.en.searchManageHistory", "codexHistoryViewer.searchManageHistory");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.searchManageHistory", "codexHistoryViewer.searchManageHistory");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.searchClearResults", "codexHistoryViewer.searchClearResults");
   registerUiCommandAlias("codexHistoryViewer.ui.en.searchClearResults", "codexHistoryViewer.searchClearResults");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.searchClearResults", "codexHistoryViewer.searchClearResults");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.searchFilterByTag", "codexHistoryViewer.searchFilterByTag");
   registerUiCommandAlias("codexHistoryViewer.ui.en.searchFilterByTag", "codexHistoryViewer.searchFilterByTag");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.searchFilterByTag", "codexHistoryViewer.searchFilterByTag");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.clearSearchTagFilter", "codexHistoryViewer.clearSearchTagFilter");
   registerUiCommandAlias("codexHistoryViewer.ui.en.clearSearchTagFilter", "codexHistoryViewer.clearSearchTagFilter");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.clearSearchTagFilter", "codexHistoryViewer.clearSearchTagFilter");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.filterPinned", "codexHistoryViewer.filterPinned");
   registerUiCommandAlias("codexHistoryViewer.ui.en.filterPinned", "codexHistoryViewer.filterPinned");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.filterPinned", "codexHistoryViewer.filterPinned");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.filterPinnedByTag", "codexHistoryViewer.filterPinnedByTag");
   registerUiCommandAlias("codexHistoryViewer.ui.en.filterPinnedByTag", "codexHistoryViewer.filterPinnedByTag");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.filterPinnedByTag", "codexHistoryViewer.filterPinnedByTag");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.clearPinnedTagFilter", "codexHistoryViewer.clearPinnedTagFilter");
   registerUiCommandAlias("codexHistoryViewer.ui.en.clearPinnedTagFilter", "codexHistoryViewer.clearPinnedTagFilter");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.clearPinnedTagFilter", "codexHistoryViewer.clearPinnedTagFilter");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.clearPinnedFilter", "codexHistoryViewer.clearPinnedFilter");
   registerUiCommandAlias("codexHistoryViewer.ui.en.clearPinnedFilter", "codexHistoryViewer.clearPinnedFilter");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.clearPinnedFilter", "codexHistoryViewer.clearPinnedFilter");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.pinnedProjectDisplayList", "codexHistoryViewer.togglePinnedProjectDisplay");
   registerUiCommandAlias("codexHistoryViewer.ui.en.pinnedProjectDisplayList", "codexHistoryViewer.togglePinnedProjectDisplay");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.pinnedProjectDisplayList", "codexHistoryViewer.togglePinnedProjectDisplay");
   registerUiCommandAlias(
     "codexHistoryViewer.ui.ja.pinnedProjectDisplayProject",
     "codexHistoryViewer.togglePinnedProjectDisplay",
@@ -7995,8 +8062,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     "codexHistoryViewer.ui.en.pinnedProjectDisplayProject",
     "codexHistoryViewer.togglePinnedProjectDisplay",
   );
+  registerUiCommandAlias(
+    "codexHistoryViewer.ui.zh.pinnedProjectDisplayProject",
+    "codexHistoryViewer.togglePinnedProjectDisplay",
+  );
   registerUiCommandAlias("codexHistoryViewer.ui.ja.pinnedProjectScopeAll", "codexHistoryViewer.togglePinnedProjectScope");
   registerUiCommandAlias("codexHistoryViewer.ui.en.pinnedProjectScopeAll", "codexHistoryViewer.togglePinnedProjectScope");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.pinnedProjectScopeAll", "codexHistoryViewer.togglePinnedProjectScope");
   registerUiCommandAlias(
     "codexHistoryViewer.ui.ja.pinnedProjectScopeCurrentGroup",
     "codexHistoryViewer.togglePinnedProjectScope",
@@ -8005,14 +8077,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     "codexHistoryViewer.ui.en.pinnedProjectScopeCurrentGroup",
     "codexHistoryViewer.togglePinnedProjectScope",
   );
+  registerUiCommandAlias(
+    "codexHistoryViewer.ui.zh.pinnedProjectScopeCurrentGroup",
+    "codexHistoryViewer.togglePinnedProjectScope",
+  );
   registerUiCommandAlias("codexHistoryViewer.ui.ja.filterHistory", "codexHistoryViewer.filterHistory");
   registerUiCommandAlias("codexHistoryViewer.ui.en.filterHistory", "codexHistoryViewer.filterHistory");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.filterHistory", "codexHistoryViewer.filterHistory");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.filterHistoryByTag", "codexHistoryViewer.filterHistoryByTag");
   registerUiCommandAlias("codexHistoryViewer.ui.en.filterHistoryByTag", "codexHistoryViewer.filterHistoryByTag");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.filterHistoryByTag", "codexHistoryViewer.filterHistoryByTag");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.clearHistoryTagFilter", "codexHistoryViewer.clearHistoryTagFilter");
   registerUiCommandAlias("codexHistoryViewer.ui.en.clearHistoryTagFilter", "codexHistoryViewer.clearHistoryTagFilter");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.clearHistoryTagFilter", "codexHistoryViewer.clearHistoryTagFilter");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.historyProjectDisplayList", "codexHistoryViewer.toggleHistoryProjectDisplay");
   registerUiCommandAlias("codexHistoryViewer.ui.en.historyProjectDisplayList", "codexHistoryViewer.toggleHistoryProjectDisplay");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.historyProjectDisplayList", "codexHistoryViewer.toggleHistoryProjectDisplay");
   registerUiCommandAlias(
     "codexHistoryViewer.ui.ja.historyProjectDisplayProject",
     "codexHistoryViewer.toggleHistoryProjectDisplay",
@@ -8021,14 +8101,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     "codexHistoryViewer.ui.en.historyProjectDisplayProject",
     "codexHistoryViewer.toggleHistoryProjectDisplay",
   );
+  registerUiCommandAlias(
+    "codexHistoryViewer.ui.zh.historyProjectDisplayProject",
+    "codexHistoryViewer.toggleHistoryProjectDisplay",
+  );
   registerUiCommandAlias("codexHistoryViewer.ui.ja.historyProjectScopeAll", "codexHistoryViewer.toggleHistoryProjectScope");
   registerUiCommandAlias("codexHistoryViewer.ui.en.historyProjectScopeAll", "codexHistoryViewer.toggleHistoryProjectScope");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.historyProjectScopeAll", "codexHistoryViewer.toggleHistoryProjectScope");
   registerUiCommandAlias(
     "codexHistoryViewer.ui.ja.historyProjectScopeCurrentGroup",
     "codexHistoryViewer.toggleHistoryProjectScope",
   );
   registerUiCommandAlias(
     "codexHistoryViewer.ui.en.historyProjectScopeCurrentGroup",
+    "codexHistoryViewer.toggleHistoryProjectScope",
+  );
+  registerUiCommandAlias(
+    "codexHistoryViewer.ui.zh.historyProjectScopeCurrentGroup",
     "codexHistoryViewer.toggleHistoryProjectScope",
   );
   registerUiCommandAlias("codexHistoryViewer.ui.cycleHistorySourceAll", "codexHistoryViewer.cycleHistorySourceFilter");
@@ -8039,32 +8128,46 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   registerUiCommandAlias("codexHistoryViewer.ui.pinnedSourceClaude", "codexHistoryViewer.cyclePinnedSourceFilter");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.clearHistoryFilter", "codexHistoryViewer.clearHistoryFilter");
   registerUiCommandAlias("codexHistoryViewer.ui.en.clearHistoryFilter", "codexHistoryViewer.clearHistoryFilter");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.clearHistoryFilter", "codexHistoryViewer.clearHistoryFilter");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.openSettings", "codexHistoryViewer.openSettings");
   registerUiCommandAlias("codexHistoryViewer.ui.en.openSettings", "codexHistoryViewer.openSettings");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.openSettings", "codexHistoryViewer.openSettings");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.exportSessions", "codexHistoryViewer.exportSessions");
   registerUiCommandAlias("codexHistoryViewer.ui.en.exportSessions", "codexHistoryViewer.exportSessions");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.exportSessions", "codexHistoryViewer.exportSessions");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.importSessions", "codexHistoryViewer.importSessions");
   registerUiCommandAlias("codexHistoryViewer.ui.en.importSessions", "codexHistoryViewer.importSessions");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.importSessions", "codexHistoryViewer.importSessions");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.searchRunPreset", "codexHistoryViewer.searchRunPreset");
   registerUiCommandAlias("codexHistoryViewer.ui.en.searchRunPreset", "codexHistoryViewer.searchRunPreset");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.searchRunPreset", "codexHistoryViewer.searchRunPreset");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.searchSavePreset", "codexHistoryViewer.searchSavePreset");
   registerUiCommandAlias("codexHistoryViewer.ui.en.searchSavePreset", "codexHistoryViewer.searchSavePreset");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.searchSavePreset", "codexHistoryViewer.searchSavePreset");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.manageCustomTitle", "codexHistoryViewer.manageCustomTitle");
   registerUiCommandAlias("codexHistoryViewer.ui.en.manageCustomTitle", "codexHistoryViewer.manageCustomTitle");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.manageCustomTitle", "codexHistoryViewer.manageCustomTitle");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.manageProjectAlias", "codexHistoryViewer.manageProjectAlias");
   registerUiCommandAlias("codexHistoryViewer.ui.en.manageProjectAlias", "codexHistoryViewer.manageProjectAlias");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.manageProjectAlias", "codexHistoryViewer.manageProjectAlias");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.manageProjectAssociation", "codexHistoryViewer.manageProjectAssociation");
   registerUiCommandAlias("codexHistoryViewer.ui.en.manageProjectAssociation", "codexHistoryViewer.manageProjectAssociation");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.manageProjectAssociation", "codexHistoryViewer.manageProjectAssociation");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.clearProjectAssociation", "codexHistoryViewer.clearProjectAssociation");
   registerUiCommandAlias("codexHistoryViewer.ui.en.clearProjectAssociation", "codexHistoryViewer.clearProjectAssociation");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.clearProjectAssociation", "codexHistoryViewer.clearProjectAssociation");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.editSessionAnnotation", "codexHistoryViewer.editSessionAnnotation");
   registerUiCommandAlias("codexHistoryViewer.ui.en.editSessionAnnotation", "codexHistoryViewer.editSessionAnnotation");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.editSessionAnnotation", "codexHistoryViewer.editSessionAnnotation");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.renameTagGlobally", "codexHistoryViewer.renameTagGlobally");
   registerUiCommandAlias("codexHistoryViewer.ui.en.renameTagGlobally", "codexHistoryViewer.renameTagGlobally");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.renameTagGlobally", "codexHistoryViewer.renameTagGlobally");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.deleteTagsGlobally", "codexHistoryViewer.deleteTagsGlobally");
   registerUiCommandAlias("codexHistoryViewer.ui.en.deleteTagsGlobally", "codexHistoryViewer.deleteTagsGlobally");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.deleteTagsGlobally", "codexHistoryViewer.deleteTagsGlobally");
   registerUiCommandAlias("codexHistoryViewer.ui.ja.undoLastAction", "codexHistoryViewer.undoLastAction");
   registerUiCommandAlias("codexHistoryViewer.ui.en.undoLastAction", "codexHistoryViewer.undoLastAction");
+  registerUiCommandAlias("codexHistoryViewer.ui.zh.undoLastAction", "codexHistoryViewer.undoLastAction");
 
   const completeInitialTreeLoad = (): void => {
     historyProvider.markInitialLoadComplete();

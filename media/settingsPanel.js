@@ -1128,7 +1128,7 @@
       value.version === 2 &&
       Number.isSafeInteger(value.revision) &&
       value.revision >= 0 &&
-      (value.language === "ja" || value.language === "en") &&
+      (value.language === "ja" || value.language === "en" || value.language === "zh") &&
       typeof value.title === "string" &&
       typeof value.activeTargetId === "string" &&
       Array.isArray(value.targets) &&

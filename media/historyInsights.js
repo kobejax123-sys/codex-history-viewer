@@ -2619,7 +2619,10 @@
   }
 
   function normalizeUiLanguage(value) {
-    return String(value || "").trim().toLowerCase().startsWith("ja") ? "ja" : "en";
+    const lang = String(value || "").trim().toLowerCase();
+    if (lang.startsWith("ja")) return "ja";
+    if (lang.startsWith("zh")) return "zh";
+    return "en";
   }
 
   function selectBreakdownRows(group, metricValue) {

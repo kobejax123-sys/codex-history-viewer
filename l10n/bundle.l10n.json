@@ -1563,6 +1563,7 @@
   "settingsPanel.option.ui.language.auto.label": "Auto",
   "settingsPanel.option.ui.language.ja.label": "Japanese",
   "settingsPanel.option.ui.language.en.label": "English",
+  "settingsPanel.option.ui.language.zh.label": "Chinese",
   "settingsPanel.option.sources.enabled.codex.label": "Codex",
   "settingsPanel.option.sources.enabled.codex.description": "Load regular Codex sessions into history. Archived sessions can be added with the setting below.",
   "settingsPanel.option.sources.enabled.claude.label": "Claude Code",

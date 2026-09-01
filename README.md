@@ -2,7 +2,7 @@
 
 Browse, search, organize, and resume past Codex CLI / Claude Code sessions through the official VS Code extensions or prepared CLI commands.
 
-Latest release: **2.12.0** (2026-08-28).
+Latest release: **2.13.0** (2026-09-01).
 
 ![Codex History Viewer screenshot](media/screenshot.png)
 
@@ -271,6 +271,12 @@ For the primary user-facing commands with descriptions, see:
 - The first **Resume in Codex** may show a VS Code security prompt for the target extension URI. Click **Open** to continue.
 - If the official Codex extension stops reopening a session, try `Developer: Reload Webviews`, then `Developer: Restart Extension Host`, then `Developer: Reload Window`.
 - **Move to Archive** and **Move to Codex History** use the official Codex provider when available. Moving archived sessions back to normal history can fall back to a filesystem move if needed.
+
+## What's New in 2.13.0
+
+- Added Simplified Chinese localization for the interface (`ui.language = zh`), including translated menus, commands, submenus, and webviews, with tri-state language switching (`ja` / `zh` / `en`).
+- Added a `check:zh-sync` script so future upstream additions can be kept synchronized with the Chinese localization.
+- Fixed the Settings page rendering blank when the UI language is set to Chinese.
 
 ## What's New in 2.12.0
 

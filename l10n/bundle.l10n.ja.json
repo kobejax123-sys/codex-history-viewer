@@ -1563,6 +1563,7 @@
   "settingsPanel.option.ui.language.auto.label": "自動",
   "settingsPanel.option.ui.language.ja.label": "日本語",
   "settingsPanel.option.ui.language.en.label": "英語",
+  "settingsPanel.option.ui.language.zh.label": "中国語",
   "settingsPanel.option.sources.enabled.codex.label": "Codex",
   "settingsPanel.option.sources.enabled.codex.description": "Codex の通常セッションを履歴へ読み込みます。アーカイブは下の設定で追加できます。",
   "settingsPanel.option.sources.enabled.claude.label": "Claude Code",

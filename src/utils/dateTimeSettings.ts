@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-export type UiLanguageSetting = "auto" | "en" | "ja";
+export type UiLanguageSetting = "auto" | "en" | "ja" | "zh";
 
 export interface DateTimeSettings {
   uiLanguage: UiLanguageSetting;
@@ -9,7 +9,7 @@ export interface DateTimeSettings {
 
 function normalizeUiLanguageSetting(raw: unknown): UiLanguageSetting {
   const v = typeof raw === "string" ? raw.trim().toLowerCase() : "";
-  return v === "ja" || v === "en" || v === "auto" ? v : "auto";
+  return v === "ja" || v === "en" || v === "zh" || v === "auto" ? v : "auto";
 }
 
 export function readUiLanguageSetting(): UiLanguageSetting {
