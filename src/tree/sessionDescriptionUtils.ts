@@ -17,6 +17,16 @@ export interface SessionDescriptionPresentation {
   tooltipDescription: string;
 }
 
+// 取路径尾部相对段（默认末 2 段），分隔符兼容 / 与 \；超出的部分以 …/ 前缀示意。
+function formatProjectTailPath(projectCwd: string, maxSegments = 2): string {
+  const trimmed = String(projectCwd ?? "").trim();
+  if (!trimmed) return "";
+  const segments = trimmed.split(/[\\/]+/).filter((segment) => segment.length > 0);
+  if (segments.length === 0) return trimmed;
+  if (segments.length <= maxSegments) return segments.join("/");
+  return `…/${segments.slice(-maxSegments).join("/")}`;
+}
+
 export function buildSessionRowLabelPresentation(
   timestamp: string,
   title: string,
@@ -82,12 +92,20 @@ export function buildSessionDescriptionPresentation(
     : projectDisplayCwd
       ? safeDisplayPath(projectDisplayCwd, 80)
       : session.cwdShort || "";
+  // 行内只显示尾部相对段，避免重复前缀挤占标题；tooltip 保留较完整路径。
+  const rowProjectPart = alias
+    ? alias
+    : projectDisplayCwd
+      ? formatProjectTailPath(projectDisplayCwd)
+      : session.cwdShort || "";
   const tagPart = tags.length > 0 ? `#${tags.join(" #")}` : "";
   const tooltipParts = [...leadingParts];
   if (projectPart) tooltipParts.push(projectPart);
   if (tagPart) tooltipParts.push(tagPart);
 
-  const rowParts = showProject ? tooltipParts : [...leadingParts, ...(tagPart ? [tagPart] : [])];
+  const rowParts = showProject
+    ? [...leadingParts, ...(rowProjectPart ? [rowProjectPart] : []), ...(tagPart ? [tagPart] : [])]
+    : [...leadingParts, ...(tagPart ? [tagPart] : [])];
   return {
     rowDescription: rowParts.join("  "),
     tooltipDescription: tooltipParts.join("  "),

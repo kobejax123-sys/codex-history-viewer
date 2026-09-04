@@ -2,7 +2,7 @@
 
 Browse, search, organize, and resume past Codex CLI / Claude Code sessions through the official VS Code extensions or prepared CLI commands.
 
-Latest release: **2.15.0** (2026-09-04).
+Latest release: **2.15.1** (2026-09-05).
 
 ![Codex History Viewer screenshot](media/screenshot.png)
 
@@ -271,6 +271,10 @@ For the primary user-facing commands with descriptions, see:
 - The first **Resume in Codex** may show a VS Code security prompt for the target extension URI. Click **Open** to continue.
 - If the official Codex extension stops reopening a session, try `Developer: Reload Webviews`, then `Developer: Restart Extension Host`, then `Developer: Reload Window`.
 - **Move to Archive** and **Move to Codex History** use the official Codex provider when available. Moving archived sessions back to normal history can fall back to a filesystem move if needed.
+
+## What's New in 2.15.1
+
+- Session rows in the History, Pinned, and Search trees now show a short tail-segment form of the project path (last two segments) by default, keeping repeated prefixes from crowding out titles; tooltips continue to show the fuller path, and project aliases still take precedence.
 
 ## What's New in 2.15.0
 

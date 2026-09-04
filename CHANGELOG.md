@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.15.1] - 2026-09-05
+
+### Changed
+
+- Session rows in the History, Pinned, and Search trees now show a short tail-segment form of the project path (last two segments) by default, keeping repeated prefixes from crowding out titles; tooltips continue to show the fuller path, and project aliases still take precedence.
+
 ## [2.15.0] - 2026-09-04
 
 ### Changed
