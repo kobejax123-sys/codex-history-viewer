@@ -359,19 +359,6 @@ export class PinnedTreeDataProvider implements vscode.TreeDataProvider<TreeNode>
         arguments: [element],
       };
 
-      item.tooltip = buildSessionHoverTooltip({
-        session: element.session,
-        annotation: annotation ? { tags: annotation.tags, note: annotation.note } : null,
-        label: rowLabel.tooltipLabel,
-        description: descriptionPresentation.tooltipDescription,
-        mode: config.previewTooltipMode,
-        projectAlias,
-        projectDisplayCwd,
-        primaryDateTime: getPinnedSessionTooltipDateTime(element.session, dateAxis),
-        primaryDateLabelKey: getPinnedSessionTooltipDateLabelKey(dateAxis),
-        agentPresentation,
-        hidden,
-      });
       return item;
     }
     if (element instanceof MissingPinnedNode) {
@@ -643,6 +630,57 @@ export class PinnedTreeDataProvider implements vscode.TreeDataProvider<TreeNode>
     return lines.join("\n");
   }
 
+  public resolveTreeItem(
+    item: vscode.TreeItem,
+    element: TreeNode,
+    _token: vscode.CancellationToken,
+  ): vscode.TreeItem {
+    if (element instanceof SessionNode) {
+      item.tooltip = this.buildSessionNodeTooltip(element);
+    }
+    return item;
+  }
+
+  private buildSessionNodeTooltip(element: SessionNode): vscode.MarkdownString | string {
+    const shortTitle = truncateByDisplayWidth(element.session.displayTitle, 40, "...");
+    const dateAxis = getSessionDateAxisForPinnedSortMode(this.sortMode);
+    const timestamp = formatSessionDateTimeForAxis(element.session, dateAxis);
+    const config = getConfig();
+    const rowLabel = buildSessionRowLabelPresentation(
+      timestamp,
+      shortTitle,
+      config.sessionRow.showTimestamp,
+    );
+    const annotation = this.annotationStore.get(element.session.fsPath);
+    const projectDisplayCwd = this.getProjectDisplayCwd(getSessionCwd(element.session));
+    const projectAlias = this.projectAliasStore.getAliasByCwd(projectDisplayCwd);
+    const agentPresentation = config.agentRunsEnabled && element.session.source === "codex"
+      ? this.codexAgentRuns.getPresentation(element.session, t("codexAgentRuns.subagent"))
+      : undefined;
+    const hidden = this.hiddenSessionStore.isHidden(element.session);
+    const descriptionPresentation = buildSessionDescriptionPresentation(
+      element.session,
+      annotation?.tags ?? [],
+      projectAlias,
+      projectDisplayCwd,
+      agentPresentation,
+      hidden,
+      config.sessionRow.showProject,
+    );
+    return buildSessionHoverTooltip({
+      session: element.session,
+      annotation: annotation ? { tags: annotation.tags, note: annotation.note } : null,
+      label: rowLabel.tooltipLabel,
+      description: descriptionPresentation.tooltipDescription,
+      mode: config.previewTooltipMode,
+      projectAlias,
+      projectDisplayCwd,
+      primaryDateTime: getPinnedSessionTooltipDateTime(element.session, dateAxis),
+      primaryDateLabelKey: getPinnedSessionTooltipDateLabelKey(dateAxis),
+      agentPresentation,
+      hidden,
+    });
+  }
 }
 
 function isCodexAgentRunsService(value: CodexAgentRunsService | vscode.Uri): value is CodexAgentRunsService {

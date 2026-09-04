@@ -593,7 +593,47 @@ export class HistoryTreeDataProvider implements vscode.TreeDataProvider<TreeNode
       arguments: [node],
     };
 
-    item.tooltip = buildSessionHoverTooltip({
+    return item;
+  }
+
+  public resolveTreeItem(
+    item: vscode.TreeItem,
+    element: TreeNode,
+    _token: vscode.CancellationToken,
+  ): vscode.TreeItem {
+    if (element instanceof SessionNode) {
+      item.tooltip = this.buildSessionNodeTooltip(element.session);
+    }
+    return item;
+  }
+
+  private buildSessionNodeTooltip(session: SessionSummary): vscode.MarkdownString | string {
+    const shortTitle = truncateByDisplayWidth(session.displayTitle, 40, "...");
+    const dateAxis = this.getSessionRowDateAxis();
+    const prefix = this.formatSessionRowDatePrefix(session, dateAxis);
+    const config = getConfig();
+    const rowLabel = buildSessionRowLabelPresentation(
+      prefix,
+      shortTitle,
+      config.sessionRow.showTimestamp,
+    );
+    const annotation = this.annotationStore.get(session.fsPath);
+    const projectDisplayCwd = this.getProjectDisplayCwd(getSessionCwd(session));
+    const projectAlias = this.projectAliasStore.getAliasByCwd(projectDisplayCwd);
+    const agentPresentation = config.agentRunsEnabled && session.source === "codex"
+      ? this.codexAgentRuns.getPresentation(session, t("codexAgentRuns.subagent"))
+      : undefined;
+    const hidden = this.hiddenSessionStore.isHidden(session);
+    const descriptionPresentation = buildSessionDescriptionPresentation(
+      session,
+      annotation?.tags ?? [],
+      projectAlias,
+      projectDisplayCwd,
+      agentPresentation,
+      hidden,
+      config.sessionRow.showProject,
+    );
+    return buildSessionHoverTooltip({
       session,
       annotation: annotation ? { tags: annotation.tags, note: annotation.note } : null,
       label: rowLabel.tooltipLabel,
@@ -606,7 +646,6 @@ export class HistoryTreeDataProvider implements vscode.TreeDataProvider<TreeNode
       agentPresentation,
       hidden,
     });
-    return item;
   }
 
   private getSessionRowDateAxis(): SessionDateAxis {

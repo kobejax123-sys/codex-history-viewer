@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.14.0] - 2026-09-04
+
+### Changed
+
+- Optimized history cache write and memory reuse: compact JSON serialization without indentations, dirty check skipping unnecessary disk writes on unchanged refresh, and direct object reuse for cache hits.
+- Added Shiki syntax highlighting LRU cache in chat timeline and file change history webviews, eliminating redundant re-highlighting during rerenders and folding toggles.
+- Tree views (History, Pinned, Search) now implement `resolveTreeItem` for deferred tooltip generation on hover, dramatically speeding up tree node expansion and reducing memory footprint.
+- Search service now cooperatively yields the event loop during large batch session searches, ensuring UI responsiveness and immediate cancellation handling.
+
 ## [2.13.1] - 2026-09-01
 
 ### Changed

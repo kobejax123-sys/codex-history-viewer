@@ -404,8 +404,13 @@ async function searchSessions(params: {
 
   const total = sessions.length;
   const maxPerMessage = 8;
+  const YIELD_INTERVAL_SESSIONS = 25;
   for (let i = 0; i < sessions.length; i += 1) {
     if (token.isCancellationRequested) return null;
+    if (i > 0 && i % YIELD_INTERVAL_SESSIONS === 0) {
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      if (token.isCancellationRequested) return null;
+    }
     const s = sessions[i]!;
     progress.report({ message: `search ${i + 1}/${total}` });
 

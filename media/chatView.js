@@ -13325,7 +13325,7 @@
 
     let html = "";
     try {
-      html = shiki.highlightCodeToHtml(codeText, entryLanguage) || "";
+      html = cachedHighlightCodeToHtml(shiki, codeText, entryLanguage);
     } catch {
       return null;
     }
@@ -17365,7 +17365,7 @@
 
     let html = "";
     try {
-      html = shiki.highlightCodeToHtml(codeText, lang) || "";
+      html = cachedHighlightCodeToHtml(shiki, codeText, lang);
     } catch {
       return null;
     }
@@ -17403,6 +17403,32 @@
       if (!/^\s*$/.test(node.textContent || "")) continue;
       codeEl.removeChild(node);
     }
+  }
+
+  const SHIKI_HIGHLIGHT_CACHE_MAX_ENTRIES = 200;
+  const SHIKI_HIGHLIGHT_CACHE_MAX_CODE_CHARS = 100000;
+  const shikiHighlightHtmlCache = new Map();
+
+  function cachedHighlightCodeToHtml(shiki, codeText, lang) {
+    if (!shiki || typeof shiki.highlightCodeToHtml !== "function") return "";
+    const safeLang = typeof lang === "string" ? lang : "";
+    const safeCode = typeof codeText === "string" ? codeText : "";
+    const cacheKey = `${safeLang}\0${safeCode}`;
+    const cached = shikiHighlightHtmlCache.get(cacheKey);
+    if (cached !== undefined) {
+      shikiHighlightHtmlCache.delete(cacheKey);
+      shikiHighlightHtmlCache.set(cacheKey, cached);
+      return cached;
+    }
+    const html = shiki.highlightCodeToHtml(safeCode, safeLang) || "";
+    if (html && safeCode.length <= SHIKI_HIGHLIGHT_CACHE_MAX_CODE_CHARS) {
+      if (shikiHighlightHtmlCache.size >= SHIKI_HIGHLIGHT_CACHE_MAX_ENTRIES) {
+        const firstKey = shikiHighlightHtmlCache.keys().next().value;
+        if (firstKey !== undefined) shikiHighlightHtmlCache.delete(firstKey);
+      }
+      shikiHighlightHtmlCache.set(cacheKey, html);
+    }
+    return html;
   }
 
   function getShikiHighlighter() {

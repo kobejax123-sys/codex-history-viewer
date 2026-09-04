@@ -120,6 +120,9 @@ function applyHistoryDateBasis(summary: SessionSummary, historyDateBasis: Histor
     historyDateBasis === "lastActivity" ? summary.lastActivityLocalDate : summary.startedLocalDate;
   const timeLabel =
     historyDateBasis === "lastActivity" ? summary.lastActivityTimeLabel : summary.startedTimeLabel;
+  if (summary.localDate === localDate && summary.timeLabel === timeLabel) {
+    return summary;
+  }
   return { ...summary, localDate, timeLabel };
 }
 
@@ -526,6 +529,7 @@ export class HistoryService {
     let supersededDuringWrite = false;
     try {
       await writeJson(this.getCacheUri(), nextCache, {
+        pretty: false,
         beforeCommit: () => {
           if (
             !this.isOperationContextCurrent(operation) ||
@@ -595,6 +599,7 @@ export class HistoryService {
 
     const writeCacheStartedAt = nowMs();
     await writeJson(this.getCacheUri(), built.cache, {
+      pretty: false,
       beforeCommit: () => throwIfHistoryRebuildCancelled(token),
     });
     const writeCacheMs = elapsedMs(writeCacheStartedAt);
@@ -693,24 +698,35 @@ export class HistoryService {
     });
     const writeCacheStartedAt = nowMs();
     let supersededDuringWrite = false;
-    try {
-      await writeJson(cacheUri, built.cache, {
-        beforeCommit: () => {
-          if (
-            !this.isOperationContextCurrent(operation) ||
-            this.indexGeneration !== committedGeneration ||
-            this.cacheForCurrentIndex !== built.cache
-          ) {
-            throw new HistoryOperationSupersededError();
-          }
-        },
-      });
-      writeCacheMs = elapsedMs(writeCacheStartedAt);
-    } catch (error) {
-      if (error instanceof HistoryOperationSupersededError) {
-        supersededDuringWrite = true;
-      } else {
-        this.logger?.debug(`history cache write failed error=${sanitizeDebugError(error)}`);
+    const isDirty =
+      !cache ||
+      normalizedCache.dropped > 0 ||
+      built.metrics.cacheMiss > 0 ||
+      built.metrics.statMiss > 0 ||
+      built.metrics.files !== Object.keys(normalizedCache.entries).length ||
+      cache.codexAgentMetadataVersion !== (built.metadataComplete ? 1 : undefined);
+
+    if (isDirty) {
+      try {
+        await writeJson(cacheUri, built.cache, {
+          pretty: false,
+          beforeCommit: () => {
+            if (
+              !this.isOperationContextCurrent(operation) ||
+              this.indexGeneration !== committedGeneration ||
+              this.cacheForCurrentIndex !== built.cache
+            ) {
+              throw new HistoryOperationSupersededError();
+            }
+          },
+        });
+        writeCacheMs = elapsedMs(writeCacheStartedAt);
+      } catch (error) {
+        if (error instanceof HistoryOperationSupersededError) {
+          supersededDuringWrite = true;
+        } else {
+          this.logger?.debug(`history cache write failed error=${sanitizeDebugError(error)}`);
+        }
       }
     }
     if (!supersededDuringWrite && this.isOperationContextCurrent(operation)) {
@@ -884,13 +900,15 @@ export class HistoryService {
 
     const cached = cachedEntries[key];
     if (cached && cached.mtimeMs === st.mtimeMs && cached.size === st.size) {
-      const summary = applyHistoryDateBasis(
-        { ...cached.summary, fileSizeBytes: st.size },
-        historyDateBasis,
-      );
+      const summaryWithBytes =
+        cached.summary.fileSizeBytes === st.size
+          ? cached.summary
+          : { ...cached.summary, fileSizeBytes: st.size };
+      const summary = applyHistoryDateBasis(summaryWithBytes, historyDateBasis);
+      const entry = summary === cached.summary ? cached : { ...cached, summary };
       return emptyRefreshFileResult({
         cacheKey: key,
-        entry: { ...cached, summary },
+        entry,
         summary,
         cacheHit: 1,
       });

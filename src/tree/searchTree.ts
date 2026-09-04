@@ -164,17 +164,6 @@ export class SearchTreeDataProvider implements vscode.TreeDataProvider<TreeNode>
         title: "",
         arguments: [element],
       };
-      item.tooltip = buildSearchSessionTooltip(
-        element,
-        annotation?.tags ?? [],
-        annotation?.note ?? "",
-        rowLabel.tooltipLabel,
-        descriptionPresentation.tooltipDescription,
-        projectAlias,
-        projectDisplayCwd,
-        agentPresentation,
-        hidden,
-      );
       return item;
     }
     if (element instanceof SearchHitNode) {
@@ -266,6 +255,56 @@ export class SearchTreeDataProvider implements vscode.TreeDataProvider<TreeNode>
   private getProjectDisplayCwd(cwd: string | null): string | null {
     if (!cwd) return null;
     return this.projectAssociationStore.getDisplayCwd(cwd) ?? cwd;
+  }
+
+  public resolveTreeItem(
+    item: vscode.TreeItem,
+    element: TreeNode,
+    _token: vscode.CancellationToken,
+  ): vscode.TreeItem {
+    if (element instanceof SearchSessionNode) {
+      item.tooltip = this.buildSearchSessionNodeTooltip(element);
+    }
+    return item;
+  }
+
+  private buildSearchSessionNodeTooltip(element: SearchSessionNode): vscode.MarkdownString | string {
+    const hidden = this.hiddenSessionStore?.isHidden(element.session) ?? false;
+    const annotation = this.annotationStore.get(element.session.fsPath);
+    const shortTitle = truncateByDisplayWidth(element.session.displayTitle, 40, "...");
+    const projectDisplayCwd = this.getProjectDisplayCwd(getSessionCwd(element.session));
+    const projectAlias = this.projectAliasStore.getAliasByCwd(projectDisplayCwd);
+    const config = getConfig();
+    const agentPresentation = config.agentRunsEnabled && element.session.source === "codex"
+      ? this.codexAgentRuns.getPresentation(element.session, t("codexAgentRuns.subagent"))
+      : undefined;
+    const titleWithHitCount = `${shortTitle} (${element.hits.length})`;
+    const timestamp = `${element.session.localDate} ${element.session.timeLabel}`;
+    const rowLabel = buildSessionRowLabelPresentation(
+      timestamp,
+      titleWithHitCount,
+      config.sessionRow.showTimestamp,
+    );
+    const descriptionPresentation = buildSessionDescriptionPresentation(
+      element.session,
+      annotation?.tags ?? [],
+      projectAlias,
+      projectDisplayCwd,
+      agentPresentation,
+      hidden,
+      config.sessionRow.showProject,
+    );
+    return buildSearchSessionTooltip(
+      element,
+      annotation?.tags ?? [],
+      annotation?.note ?? "",
+      rowLabel.tooltipLabel,
+      descriptionPresentation.tooltipDescription,
+      projectAlias,
+      projectDisplayCwd,
+      agentPresentation,
+      hidden,
+    );
   }
 }
 
