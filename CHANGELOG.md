@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.14.1] - 2026-09-04
+
+### Changed
+
+- Added in-memory mtime cache for parsed chat session models, skipping redundant full JSONL reparsing on unchanged auto-refresh or duplicate views.
+- Added in-memory mtime cache for local image base64 conversions, eliminating repetitive disk reads and base64 string encodings.
+
 ## [2.14.0] - 2026-09-04
 
 ### Changed

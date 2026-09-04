@@ -96,15 +96,51 @@ interface ChatTimelineBuildResult {
   latestTurnId?: string;
 }
 
+interface CachedChatSessionModelEntry {
+  mtimeMs: number;
+  size: number;
+  optionsKey: string;
+  model: ChatSessionModel;
+}
+
+const CHAT_MODEL_CACHE_MAX_ENTRIES = 8;
+const chatSessionModelCache = new Map<string, CachedChatSessionModelEntry>();
+
+function getChatModelOptionsKey(options: ChatSessionModelBuildOptions): string {
+  return `${options.images?.enabled ?? true}:${options.images?.maxSizeMB ?? 20}:${options.includeDetails ?? false}:${options.turnTimelineMode ?? "off"}`;
+}
+
 // Parse a session JSONL and build a session-view model.
 export async function buildChatSessionModel(
   fsPath: string,
   options: ChatSessionModelBuildOptions = {},
   onRecord?: ChatTimelineRecordHandler,
 ): Promise<ChatSessionModel> {
+  let stat: fs.Stats | null = null;
+  const optionsKey = getChatModelOptionsKey(options);
+
+  if (!onRecord) {
+    try {
+      stat = await fs.promises.stat(fsPath);
+      const cached = chatSessionModelCache.get(fsPath);
+      if (
+        cached &&
+        cached.mtimeMs === stat.mtimeMs &&
+        cached.size === stat.size &&
+        cached.optionsKey === optionsKey
+      ) {
+        chatSessionModelCache.delete(fsPath);
+        chatSessionModelCache.set(fsPath, cached);
+        return cached.model;
+      }
+    } catch {
+      // Proceed to normal read on stat failure.
+    }
+  }
+
   const meta = await readSessionMeta(fsPath);
   const timeline = await readTimelineItems(fsPath, meta.cwd, options, onRecord);
-  return {
+  const model: ChatSessionModel = {
     fsPath,
     meta,
     items: timeline.items,
@@ -112,6 +148,21 @@ export async function buildChatSessionModel(
     ...(timeline.activeTurnId ? { activeTurnId: timeline.activeTurnId } : {}),
     ...(timeline.latestTurnId ? { latestTurnId: timeline.latestTurnId } : {}),
   };
+
+  if (!onRecord && stat) {
+    if (chatSessionModelCache.size >= CHAT_MODEL_CACHE_MAX_ENTRIES) {
+      const oldestKey = chatSessionModelCache.keys().next().value;
+      if (oldestKey !== undefined) chatSessionModelCache.delete(oldestKey);
+    }
+    chatSessionModelCache.set(fsPath, {
+      mtimeMs: stat.mtimeMs,
+      size: stat.size,
+      optionsKey,
+      model,
+    });
+  }
+
+  return model;
 }
 
 export async function buildChatPatchEntryDetails(

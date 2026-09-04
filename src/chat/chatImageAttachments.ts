@@ -226,6 +226,15 @@ function imageFromDataUri(src: string, maxBytes: number): ChatImageAttachment {
   };
 }
 
+interface CachedLocalImageEntry {
+  mtimeMs: number;
+  size: number;
+  attachment: ChatImageAttachment;
+}
+
+const LOCAL_IMAGE_CACHE_MAX_ENTRIES = 32;
+const localImageAttachmentCache = new Map<string, CachedLocalImageEntry>();
+
 async function imageFromLocalPath(rawPath: string, sessionCwd: string | undefined, maxBytes: number): Promise<ChatImageAttachment> {
   const resolved = resolveLocalImagePath(rawPath, sessionCwd);
   if (!resolved) return createUnavailableImageAttachment("invalid");
@@ -237,8 +246,16 @@ async function imageFromLocalPath(rawPath: string, sessionCwd: string | undefine
     const stat = await fs.stat(resolved);
     if (!stat.isFile()) return createUnavailableImageAttachment("missing", mimeType, path.basename(resolved));
     if (stat.size > maxBytes) return createUnavailableImageAttachment("tooLarge", mimeType, path.basename(resolved));
+
+    const cached = localImageAttachmentCache.get(resolved);
+    if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) {
+      localImageAttachmentCache.delete(resolved);
+      localImageAttachmentCache.set(resolved, cached);
+      return cached.attachment;
+    }
+
     const bytes = await fs.readFile(resolved);
-    return {
+    const attachment: ChatImageAttachment = {
       type: "image",
       status: "available",
       source: "local",
@@ -246,6 +263,18 @@ async function imageFromLocalPath(rawPath: string, sessionCwd: string | undefine
       mimeType,
       label: path.basename(resolved) || DEFAULT_IMAGE_ATTACHMENT_LABEL,
     };
+
+    if (localImageAttachmentCache.size >= LOCAL_IMAGE_CACHE_MAX_ENTRIES) {
+      const oldestKey = localImageAttachmentCache.keys().next().value;
+      if (oldestKey !== undefined) localImageAttachmentCache.delete(oldestKey);
+    }
+    localImageAttachmentCache.set(resolved, {
+      mtimeMs: stat.mtimeMs,
+      size: stat.size,
+      attachment,
+    });
+
+    return attachment;
   } catch {
     return createUnavailableImageAttachment("missing", mimeType, path.basename(resolved));
   }
