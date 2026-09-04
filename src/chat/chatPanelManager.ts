@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as vscode from "vscode";
 import type { HistoryService } from "../services/historyService";
@@ -4998,7 +4999,10 @@ function toSummaryPatchEntry(entry: ChatPatchEntry): ChatPatchEntry {
 
 async function buildChatPerformanceStats(fsPath: string, model: ChatSessionModel): Promise<ChatPerformanceStats> {
   const stats: ChatPerformanceStats = {
-    fileSizeBytes: 0,
+    fileSizeBytes:
+      typeof model.fileSizeBytes === "number" && Number.isFinite(model.fileSizeBytes)
+        ? Math.max(0, Math.floor(model.fileSizeBytes))
+        : 0,
     itemCount: Array.isArray(model.items) ? model.items.length : 0,
     messageChars: 0,
     diffGroupCount: 0,
@@ -5007,11 +5011,13 @@ async function buildChatPerformanceStats(fsPath: string, model: ChatSessionModel
     imageCount: 0,
   };
 
-  try {
-    const stat = await vscode.workspace.fs.stat(vscode.Uri.file(fsPath));
-    stats.fileSizeBytes = Number.isFinite(stat.size) ? Math.max(0, Math.floor(stat.size)) : 0;
-  } catch {
-    // File size is only a performance hint; keep rendering if it cannot be read.
+  if (stats.fileSizeBytes <= 0) {
+    try {
+      const stat = await fs.stat(fsPath);
+      stats.fileSizeBytes = Number.isFinite(stat.size) ? Math.max(0, Math.floor(stat.size)) : 0;
+    } catch {
+      // File size is only a performance hint; keep rendering if it cannot be read.
+    }
   }
 
   for (const item of Array.isArray(model.items) ? model.items : []) {

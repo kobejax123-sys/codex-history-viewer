@@ -417,4 +417,5 @@ export interface ChatSessionModel {
   liveRunningTurnId?: string;
   latestTurnId?: string;
   annotation?: ChatSessionAnnotation;
+  fileSizeBytes?: number;
 }

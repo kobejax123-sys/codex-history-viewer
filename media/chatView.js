@@ -595,6 +595,45 @@
           },
         )
       : null;
+  let codeBlockModelByElement = new WeakMap();
+  const lazyCodeBlockObserver =
+    typeof IntersectionObserver === "function"
+      ? new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) continue;
+              lazyCodeBlockObserver.unobserve(entry.target);
+              const model = codeBlockModelByElement.get(entry.target);
+              if (model) {
+                codeBlockModelByElement.delete(entry.target);
+                hydrateCodeBlock(model);
+              }
+            }
+          },
+          {
+            root: scrollRootEl instanceof Element ? scrollRootEl : null,
+            rootMargin: "800px 0px",
+          },
+        )
+      : null;
+
+  function hydrateCodeBlock(model) {
+    const { codeText, lang, wrap, placeholderPre } = model;
+    if (!wrap || !wrap.isConnected) return;
+    const highlightedPre = createHighlightedCodeBlockElement(codeText, lang);
+    if (highlightedPre && placeholderPre.parentNode === wrap) {
+      // 若该占位块正被页内搜索命中，替换后重刷搜索结果，避免高亮 mark 与结果引用指向游离节点。
+      const hadSearchHits = pageSearchResults.some((result) => {
+        if (!result) return false;
+        if (result.revealElement === placeholderPre || result.orderElement === placeholderPre) return true;
+        const marks = Array.isArray(result.marks) ? result.marks : [];
+        return marks.some((mark) => mark instanceof HTMLElement && placeholderPre.contains(mark));
+      });
+      placeholderPre.replaceWith(highlightedPre);
+      if (hadSearchHits) refreshPageSearchResults({ preserveIndex: true, reveal: false });
+    }
+  }
+
   const toolbarResizeObserver =
     typeof ResizeObserver === "function" && toolbarEl instanceof HTMLElement
       ? new ResizeObserver(() => {
@@ -8371,6 +8410,8 @@
     closeBranchOccurrenceMenu();
     if (lazyImageObserver) lazyImageObserver.disconnect();
     if (lazyMermaidObserver) lazyMermaidObserver.disconnect();
+    if (lazyCodeBlockObserver) lazyCodeBlockObserver.disconnect();
+    codeBlockModelByElement = new WeakMap();
     mermaidRenderGeneration += 1;
     mermaidModelByElement = new WeakMap();
     mermaidModelsByKey = new Map();
@@ -13880,14 +13921,28 @@
     header.appendChild(btn);
     wrap.appendChild(header);
 
-    const highlightedPre = explicitLanguage ? createHighlightedCodeBlockElement(codeText, explicitLanguage) : null;
-    if (highlightedPre) {
-      wrap.appendChild(highlightedPre);
+    const cacheKey = `${explicitLanguage || ""}\0${codeText}`;
+    const isAlreadyCached = shikiHighlightHtmlCache.has(cacheKey);
+
+    if (isAlreadyCached || !lazyCodeBlockObserver || codeText.length < 120) {
+      const highlightedPre = explicitLanguage ? createHighlightedCodeBlockElement(codeText, explicitLanguage) : null;
+      if (highlightedPre) {
+        wrap.appendChild(highlightedPre);
+      } else {
+        const pre = el("pre", { className: "codePre" });
+        pre.setAttribute("dir", "ltr");
+        pre.textContent = codeText;
+        registerPageSearchTextUnit(pre, codeText, "direct");
+        wrap.appendChild(pre);
+      }
     } else {
-      const pre = el("pre", {});
+      const pre = el("pre", { className: "codePre" });
+      pre.setAttribute("dir", "ltr");
       pre.textContent = codeText;
       registerPageSearchTextUnit(pre, codeText, "direct");
       wrap.appendChild(pre);
+      codeBlockModelByElement.set(wrap, { codeText, lang: explicitLanguage, wrap, placeholderPre: pre });
+      lazyCodeBlockObserver.observe(wrap);
     }
     return wrap;
   }
@@ -15445,12 +15500,26 @@
       wrap.appendChild(header);
 
       pre.replaceWith(wrap);
-      const highlightedPre = createHighlightedCodeBlockElement(codeText, lang);
-      if (highlightedPre) {
-        wrap.appendChild(highlightedPre);
+      const cacheKey = `${lang || ""}\0${codeText}`;
+      const isAlreadyCached = shikiHighlightHtmlCache.has(cacheKey);
+
+      if (isAlreadyCached || !lazyCodeBlockObserver || codeText.length < 120) {
+        const highlightedPre = createHighlightedCodeBlockElement(codeText, lang);
+        if (highlightedPre) {
+          wrap.appendChild(highlightedPre);
+        } else {
+          pre.classList.add("codePre");
+          pre.setAttribute("dir", "ltr");
+          registerPageSearchTextUnit(pre, codeText, "direct");
+          wrap.appendChild(pre);
+        }
       } else {
+        pre.classList.add("codePre");
+        pre.setAttribute("dir", "ltr");
         registerPageSearchTextUnit(pre, codeText, "direct");
         wrap.appendChild(pre);
+        codeBlockModelByElement.set(wrap, { codeText, lang, wrap, placeholderPre: pre });
+        lazyCodeBlockObserver.observe(wrap);
       }
     }
   }

@@ -91,6 +91,7 @@ export interface ChatPatchEntryDetailTarget {
 
 interface ChatTimelineBuildResult {
   items: ChatTimelineItem[];
+  meta: ChatSessionMeta;
   turns?: ChatTurnSummary[];
   activeTurnId?: string;
   latestTurnId?: string;
@@ -104,6 +105,8 @@ interface CachedChatSessionModelEntry {
 }
 
 const CHAT_MODEL_CACHE_MAX_ENTRIES = 8;
+// 与 sessionSummary.tryReadSessionMeta 的 META_SCAN_LINE_LIMIT 保持一致。
+const SESSION_META_SCAN_LINE_LIMIT = 400;
 const chatSessionModelCache = new Map<string, CachedChatSessionModelEntry>();
 
 function getChatModelOptionsKey(options: ChatSessionModelBuildOptions): string {
@@ -138,15 +141,15 @@ export async function buildChatSessionModel(
     }
   }
 
-  const meta = await readSessionMeta(fsPath);
-  const timeline = await readTimelineItems(fsPath, meta.cwd, options, onRecord);
+  const timeline = await readTimelineItems(fsPath, options, onRecord);
   const model: ChatSessionModel = {
     fsPath,
-    meta,
+    meta: timeline.meta,
     items: timeline.items,
     ...(timeline.turns && timeline.turns.length > 0 ? { turns: timeline.turns } : {}),
     ...(timeline.activeTurnId ? { activeTurnId: timeline.activeTurnId } : {}),
     ...(timeline.latestTurnId ? { latestTurnId: timeline.latestTurnId } : {}),
+    ...(stat ? { fileSizeBytes: stat.size } : {}),
   };
 
   if (!onRecord && stat) {
@@ -193,7 +196,6 @@ async function readSessionMeta(fsPath: string): Promise<ChatSessionMeta> {
 
 async function readTimelineItems(
   fsPath: string,
-  sessionCwd: string | undefined,
   options: ChatSessionModelBuildOptions,
   onRecord?: ChatTimelineRecordHandler,
 ): Promise<ChatTimelineBuildResult> {
@@ -201,6 +203,8 @@ async function readTimelineItems(
   const stream = fs.createReadStream(fsPath, { encoding: "utf8" });
   const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
 
+  const meta: ChatSessionMeta = {};
+  let sessionCwd: string | undefined = undefined;
   const items: ChatTimelineItem[] = [];
   const toolByCallId = new Map<string, ChatToolItem>();
   const pendingPatchGroups = new Map<string, PendingPatchGroup>();
@@ -228,6 +232,17 @@ async function readTimelineItems(
         continue;
       }
       await onRecord?.({ lineIndex, obj, blank: false });
+
+      // 限制元数据扫描行数；Codex 读到 session_meta 即停止，避免把后续记录的顶层 timestamp 误当会话开始时间。
+      if (
+        lineIndex <= SESSION_META_SCAN_LINE_LIMIT &&
+        (!meta.historySource || meta.historySource === "claude")
+      ) {
+        updateSessionMetaFromRecord(meta, obj);
+        if (!sessionCwd && meta.cwd) {
+          sessionCwd = meta.cwd;
+        }
+      }
 
       flushPendingClaudeUsageIfNeeded(obj, items, usageState);
       appendEnvironmentSnapshotIfChanged(obj, items, environmentState, () => messageIndex, () => turnState?.activeTurnId);
@@ -297,14 +312,46 @@ async function readTimelineItems(
   flushPendingPatchGroups(items, pendingPatchGroups, turnState);
   flushPendingClaudeUsage(items, usageState);
   finalizeTimelineItems(items);
-  if (!turnState) return { items };
+
+  if (!meta.historySource) {
+    const fallbackMeta = await readSessionMeta(fsPath);
+    Object.assign(meta, fallbackMeta);
+  }
+
+  if (!turnState) return { items, meta };
   const turnResult = finalizeCodexTurns(items, turnState);
   return {
     items,
+    meta,
     ...(turnResult.turns.length > 0 ? { turns: turnResult.turns } : {}),
     ...(turnResult.activeTurnId ? { activeTurnId: turnResult.activeTurnId } : {}),
     ...(turnResult.latestTurnId ? { latestTurnId: turnResult.latestTurnId } : {}),
   };
+}
+
+function updateSessionMetaFromRecord(meta: ChatSessionMeta, obj: any): void {
+  if (!obj || typeof obj !== "object") return;
+  if (obj.type === "session_meta" && obj.payload && typeof obj.payload === "object") {
+    const payload = obj.payload as Record<string, unknown>;
+    meta.historySource = "codex";
+    if (typeof payload.id === "string") meta.id = payload.id;
+    if (typeof payload.timestamp === "string") meta.timestampIso = payload.timestamp;
+    if (typeof payload.cwd === "string") meta.cwd = payload.cwd;
+    if (typeof payload.originator === "string") meta.originator = payload.originator;
+    if (typeof payload.cli_version === "string") meta.cliVersion = payload.cli_version;
+    if (typeof payload.model_provider === "string") meta.modelProvider = payload.model_provider;
+    if (typeof payload.source === "string") meta.source = payload.source;
+    return;
+  }
+
+  if (typeof obj.sessionId === "string" && !meta.id) meta.id = obj.sessionId;
+  if (typeof obj.timestamp === "string" && !meta.timestampIso) meta.timestampIso = obj.timestamp;
+  if (typeof obj.cwd === "string" && !meta.cwd) meta.cwd = obj.cwd;
+  if (typeof obj.version === "string" && !meta.cliVersion) meta.cliVersion = obj.version;
+  if (!meta.historySource && (meta.id || meta.timestampIso || meta.cwd)) {
+    meta.historySource = "claude";
+    if (!meta.source) meta.source = "claude-vscode";
+  }
 }
 
 async function readPatchEntryDetails(

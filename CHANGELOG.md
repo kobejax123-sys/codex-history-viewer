@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.15.0] - 2026-09-04
+
+### Changed
+
+- Merged timeline streaming and metadata extraction into a single read pass during session opening, avoiding opening two separate file streams per opened session.
+- Reused cached session file size in performance stats calculation and replaced cross-process extension host `vscode.workspace.fs.stat` with fast native file system calls.
+- Added viewport-aware lazy Shiki syntax highlighting for code blocks in the chat timeline view, instantly rendering plain code blocks on initial session open and lazily highlighting them when scrolling near the viewport.
+
+### Fixed
+
+- Refreshed in-page search results when a lazily highlighted code block replaces its placeholder, keeping search marks and result navigation valid instead of pointing at detached nodes.
+- Bounded inline session-meta extraction to the first 400 lines and stopped scanning once a Codex `session_meta` is read, preventing mid-session record timestamps from being recorded as the session start time in non-standard files.
+
 ## [2.14.1] - 2026-09-04
 
 ### Changed
