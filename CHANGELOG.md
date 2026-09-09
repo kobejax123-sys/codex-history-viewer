@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.15.2] - 2026-09-09
+
+### Added
+
+- Session Viewer now shows the model and reasoning effort of each assistant response in the message header. Reasoning effort uses a theme link color for emphasis, Claude Code sessions now surface their recorded `effort` value, and `<synthetic>` placeholder models are filtered out.
+
 ## [2.15.1] - 2026-09-05
 
 ### Changed

@@ -1706,7 +1706,15 @@ function toMessageModelMeta(meta: ChatMessageModelMeta): ChatMessageModelMeta {
 
 function extractClaudeMessageModelMeta(obj: any): ChatMessageModelMeta {
   const model = normalizeModelMetaValue(obj?.message?.model ?? obj?.model);
-  return model ? { model } : {};
+  const effort = normalizeModelMetaValue(obj?.effort);
+  return {
+    ...(model && !isSyntheticModelName(model) ? { model } : {}),
+    ...(effort ? { effort } : {}),
+  };
+}
+
+function isSyntheticModelName(value: string): boolean {
+  return value.replace(/[<>]/g, "").trim().toLowerCase() === "synthetic";
 }
 
 function normalizeModelMetaValue(value: unknown): string | undefined {

@@ -10657,6 +10657,22 @@
       ts.title = item.timestampIso;
       metaTags.appendChild(ts);
     }
+    if (role === "assistant") {
+      const modelText = typeof item.model === "string" ? item.model.trim() : "";
+      if (modelText) {
+        const modelTag = el("span", { className: "tag model" });
+        modelTag.textContent = modelText;
+        modelTag.title = modelText;
+        metaTags.appendChild(modelTag);
+      }
+      const effortText = typeof item.effort === "string" ? item.effort.trim() : "";
+      if (effortText) {
+        const effortTag = el("span", { className: "tag effort" });
+        effortTag.textContent = effortText;
+        effortTag.title = effortText;
+        metaTags.appendChild(effortTag);
+      }
+    }
     metaLine.appendChild(metaTags);
 
     const headerActions = el("div", { className: "messageNav cardHeaderActions" });
