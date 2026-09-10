@@ -22,6 +22,7 @@
   const btnToc = document.getElementById("btnToc");
   const tocOverlayEl = document.getElementById("tocOverlay");
   const tocTitleEl = document.getElementById("tocTitle");
+  const btnTocCopyClean = document.getElementById("btnTocCopyClean");
   const btnTocClose = document.getElementById("btnTocClose");
   const tocListEl = document.getElementById("tocList");
   const btnPerformanceMode = document.getElementById("btnPerformanceMode");
@@ -726,6 +727,12 @@
   setToolbarIconButton(btnPageSearchNext, NAV_DOWN_ICON_SVG, "Next match");
   setToolbarIconButton(btnPageSearchClose, CLOSE_ICON_SVG, "Close search");
   setToolbarIconButton(btnTocClose, CLOSE_ICON_SVG, "Close outline");
+  if (btnTocCopyClean instanceof HTMLElement) {
+    setToolbarIconButton(btnTocCopyClean, COPY_ICON_SVG, "Copy Clean QA Markdown");
+    btnTocCopyClean.addEventListener("click", () => {
+      vscode.postMessage({ type: "copyCleanMarkdown" });
+    });
+  }
 
   if (btnResumeInCodex instanceof HTMLElement) {
     btnResumeInCodex.addEventListener("click", handleResumePrimaryClick);
@@ -2270,6 +2277,10 @@
     if (btnTocClose instanceof HTMLElement) {
       const closeTocTooltip = getSafeUiText(i18n.tocClose, "Close Outline");
       setToolbarIconButton(btnTocClose, CLOSE_ICON_SVG, closeTocTooltip);
+    }
+    if (btnTocCopyClean instanceof HTMLElement) {
+      const copyCleanTooltip = getSafeUiText(i18n.tocCopyClean, "Copy Clean QA Markdown");
+      setToolbarIconButton(btnTocCopyClean, COPY_ICON_SVG, copyCleanTooltip);
     }
     updatePageSearchStatus();
     scheduleToolbarCompactMode();

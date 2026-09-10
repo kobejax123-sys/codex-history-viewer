@@ -19,6 +19,7 @@ import {
 import { SearchTreeDataProvider } from "./tree/searchTree";
 import { TranscriptContentProvider } from "./transcript/transcriptProvider";
 import { TranscriptDocumentLinkProvider } from "./transcript/transcriptDocumentLinkProvider";
+import { renderTranscript } from "./transcript/transcriptRenderer";
 import { renderResumeContext } from "./transcript/resumeRenderer";
 import { promoteSessionCopyToToday } from "./services/promoteService";
 import {
@@ -46,6 +47,7 @@ import {
   normalizeSearchHistoryProjectKey,
 } from "./services/searchHistoryStore";
 import {
+  exportCleanTranscripts,
   exportMaskedTranscripts,
   exportSessions,
   importSessions,
@@ -4986,6 +4988,36 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand("codexHistoryViewer.copyCleanMarkdown", async (elementOrArgs?: unknown) => {
+      const session = resolveSessionFromElementOrActive(historyService, transcriptProvider.scheme, elementOrArgs);
+      if (!session) {
+        void vscode.window.showInformationMessage(t("export.noSessionsSelected"));
+        return;
+      }
+      const { timeZone } = resolveDateTimeSettings();
+      try {
+        const rendered = await renderTranscript(session.fsPath, {
+          timeZone,
+          cleanQaOnly: true,
+          title: session.displayTitle,
+        });
+        await vscode.env.clipboard.writeText(rendered.content);
+        void vscode.window.showInformationMessage(t("export.cleanMarkdownCopied"));
+      } catch {
+        void vscode.window.showErrorMessage(t("export.cleanMarkdownFailed"));
+      }
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("codexHistoryViewer.openSessionCleanMarkdown", async (elementOrArgs?: unknown) => {
+      const session = resolveSessionFromElementOrActive(historyService, transcriptProvider.scheme, elementOrArgs);
+      if (!session) return;
+      await transcriptProvider.openSessionTranscript(session, { preview: false, cleanQaOnly: true });
+    }),
+  );
+
+  context.subscriptions.push(
     vscode.commands.registerCommand("codexHistoryViewer.copyResumePrompt", async (elementOrArgs?: unknown) => {
       // Resolve exactly one target session from tree selection or webview args, then copy its prompt excerpt.
       const session = resolveSingleSessionTarget(elementOrArgs);
@@ -5513,29 +5545,44 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
       const mode = await vscode.window.showQuickPick(
         [
-          { label: t("export.format.rawJsonl"), value: "raw" as const },
-          { label: t("export.format.sanitizedMarkdown"), value: "masked" as const },
+          {
+            label: t("export.format.cleanMarkdown"),
+            description: t("export.format.cleanMarkdownDesc"),
+            value: "clean" as const,
+          },
+          {
+            label: t("export.format.sanitizedMarkdown"),
+            description: t("export.format.sanitizedMarkdownDesc"),
+            value: "masked" as const,
+          },
+          {
+            label: t("export.format.rawJsonl"),
+            description: t("export.format.rawJsonlDesc"),
+            value: "raw" as const,
+          },
         ],
         { title: t("export.format.title") },
       );
       if (!mode) return;
 
       const result =
-        mode.value === "masked"
-          ? await exportMaskedTranscripts({ sessions })
-          : await exportSessions({
-              sessions,
-              codexSessionsRoot: getConfig().sessionsRoot,
-              claudeSessionsRoot: getConfig().claudeSessionsRoot,
-              createMetadata: (exportedSessions) =>
-                createSessionMetadataBackup(historyService.getIndex(), {
-                  annotations: annotationStore,
-                  titles: titleOverrideStore,
-                  pins: pinStore,
-                  bookmarks: bookmarkStore,
-                  hidden: hiddenSessionStore,
-                }, exportedSessions, resolveExtensionVersion(context)),
-            });
+        mode.value === "clean"
+          ? await exportCleanTranscripts({ sessions })
+          : mode.value === "masked"
+            ? await exportMaskedTranscripts({ sessions })
+            : await exportSessions({
+                sessions,
+                codexSessionsRoot: getConfig().sessionsRoot,
+                claudeSessionsRoot: getConfig().claudeSessionsRoot,
+                createMetadata: (exportedSessions) =>
+                  createSessionMetadataBackup(historyService.getIndex(), {
+                    annotations: annotationStore,
+                    titles: titleOverrideStore,
+                    pins: pinStore,
+                    bookmarks: bookmarkStore,
+                    hidden: hiddenSessionStore,
+                  }, exportedSessions, resolveExtensionVersion(context)),
+              });
       if (!result) return;
 
       void vscode.window.showInformationMessage(

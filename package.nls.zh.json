@@ -109,6 +109,8 @@
   "cmd.cleanupHandoffs": "删除交接文件",
   "cmd.cleanupMissingPins": "移除缺失的固定项",
   "cmd.exportSessions": "导出会话...",
+  "cmd.copyCleanMarkdown": "复制纯净问答 Markdown",
+  "cmd.openSessionCleanMarkdown": "打开纯净问答 Markdown",
   "cmd.importSessions": "导入会话...",
   "cmd.searchRunPreset": "运行已保存的搜索...",
   "cmd.searchRunRecent": "从搜索历史运行...",

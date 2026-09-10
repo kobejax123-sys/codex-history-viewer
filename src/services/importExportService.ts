@@ -237,6 +237,50 @@ export async function exportSessions(params: {
   };
 }
 
+export async function exportCleanTranscripts(params: {
+  sessions: readonly SessionSummary[];
+}): Promise<ExportSessionsResult | null> {
+  const { sessions } = params;
+  if (sessions.length === 0) return null;
+
+  const picked = await vscode.window.showOpenDialog({
+    canSelectMany: false,
+    canSelectFolders: true,
+    canSelectFiles: false,
+    openLabel: t("export.dialog.cleanExportDestination"),
+  });
+  if (!picked || picked.length === 0) return null;
+  const baseDir = picked[0]!.fsPath;
+
+  const stamp = buildDateStamp();
+  const destinationDir = path.join(baseDir, `codex-history-clean-qa-${stamp}`);
+  await vscode.workspace.fs.createDirectory(vscode.Uri.file(destinationDir));
+
+  let exported = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  const { timeZone } = resolveDateTimeSettings();
+  for (const s of sessions) {
+    const fileBase = path.parse(s.fsPath).name;
+    const outPath = await ensureUniquePath(path.join(destinationDir, `${fileBase}.clean.md`));
+    try {
+      const rendered = await renderTranscript(s.fsPath, {
+        timeZone,
+        cleanQaOnly: true,
+        title: s.displayTitle,
+        locationLabel: s.storage.archiveState === "archived" ? t("session.location.archived") : t("session.location.active"),
+      });
+      await fs.writeFile(outPath, rendered.content, { encoding: "utf8" });
+      exported += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+
+  return { destinationDir, exported, skipped, failed, metadataStatus: "none" };
+}
+
 export async function exportMaskedTranscripts(params: {
   sessions: readonly SessionSummary[];
 }): Promise<ExportSessionsResult | null> {

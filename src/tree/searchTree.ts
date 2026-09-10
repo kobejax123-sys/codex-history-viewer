@@ -33,6 +33,7 @@ import { CodexAgentRunsService } from "../agents/codexAgentRunsService";
 import type { CodexAgentPresentation } from "../agents/codexAgentRunsTypes";
 import { SessionIconResolver } from "../ui/sessionIconResolver";
 import type { HiddenSessionStore } from "../services/hiddenSessionStore";
+import { compileSearchQuery, type CompiledSearchQuery } from "../services/searchService";
 
 // Provides the Search view (root -> session -> hit).
 export class SearchTreeDataProvider implements vscode.TreeDataProvider<TreeNode> {
@@ -129,9 +130,10 @@ export class SearchTreeDataProvider implements vscode.TreeDataProvider<TreeNode>
         titleWithHitCount,
         config.sessionRow.showTimestamp,
       );
+      const defaultExpanded = this.sessionNodes.length <= 25;
       const item = new vscode.TreeItem(
         rowLabel.label,
-        vscode.TreeItemCollapsibleState.Collapsed,
+        defaultExpanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed,
       );
       const descriptionPresentation = buildSessionDescriptionPresentation(
         element.session,
@@ -171,9 +173,25 @@ export class SearchTreeDataProvider implements vscode.TreeDataProvider<TreeNode>
       const hidden = this.hiddenSessionStore?.isHidden(element.session) ?? false;
       const roleLabel = formatRoleLabel(element.hit.role, element.hit.source);
       const locationLabel = formatLocationLabel(element.hit);
-      const label = `${locationLabel} ${roleLabel}: ${element.hit.snippet}`;
+      const prefix = `${locationLabel} ${roleLabel}: `;
+      const rawSnippet = element.hit.snippet;
+      const fullText = `${prefix}${rawSnippet}`;
+
+      const queryInput = element.pageSearchSeed?.queryInput || element.query;
+      const caseSensitive = element.pageSearchSeed?.caseSensitive ?? false;
+      const compiled = queryInput ? compileSearchQuery(queryInput, caseSensitive) : null;
+      const matches = compiled ? compiled.locateAll(rawSnippet, 10) : [];
+      const highlights: [number, number][] = matches.map((m) => [
+        prefix.length + m.hitAt,
+        prefix.length + m.hitAt + m.hitLen,
+      ]);
+
+      const treeLabel: vscode.TreeItemLabel = {
+        label: fullText,
+        highlights: highlights.length > 0 ? highlights : undefined,
+      };
       const item = new vscode.TreeItem(
-        label,
+        treeLabel,
         vscode.TreeItemCollapsibleState.None,
       );
       const node = new SessionNode(element.session, pinned);
@@ -196,7 +214,9 @@ export class SearchTreeDataProvider implements vscode.TreeDataProvider<TreeNode>
         arguments: [element],
       };
       item.tooltip =
-        getConfig().previewTooltipMode === "titleOnly" ? buildTreeRowTooltip(label) : buildSearchHitTooltip(element, hidden);
+        getConfig().previewTooltipMode === "titleOnly"
+          ? buildTreeRowTooltip(fullText)
+          : buildSearchHitTooltip(element, hidden, compiled);
       return item;
     }
     if (element instanceof SearchHelpNode) {
@@ -379,9 +399,15 @@ function buildSearchSessionTooltip(
 
   md.appendMarkdown(`\n---\n`);
   const max = 5;
+  const queryInput = node.pageSearchSeed?.queryInput || "";
+  const caseSensitive = node.pageSearchSeed?.caseSensitive ?? false;
+  const compiled = queryInput ? compileSearchQuery(queryInput, caseSensitive) : null;
+
   for (const h of node.hits.slice(0, max)) {
+    const matches = compiled ? compiled.locateAll(h.snippet, 5) : [];
+    const snippetMd = renderHighlightedSnippetMarkdown(h.snippet, matches);
     md.appendMarkdown(
-      `- ${escapeForMarkdown(formatLocationLabel(h))} **${formatRoleLabel(h.role, h.source)}** ${escapeForMarkdown(h.snippet)}\n`,
+      `- ${escapeForMarkdown(formatLocationLabel(h))} **${formatRoleLabel(h.role, h.source)}** ${snippetMd}\n`,
     );
   }
   if (node.hits.length > max) {
@@ -392,11 +418,40 @@ function buildSearchSessionTooltip(
   return md;
 }
 
-function buildSearchHitTooltip(node: SearchHitNode, hidden = false): vscode.MarkdownString {
+function renderHighlightedSnippetMarkdown(
+  snippet: string,
+  matches: readonly { hitAt: number; hitLen: number }[],
+): string {
+  if (matches.length === 0) return escapeForMarkdown(snippet);
+  let result = "";
+  let lastIndex = 0;
+  for (const m of matches) {
+    if (m.hitAt > lastIndex) {
+      result += escapeForMarkdown(snippet.slice(lastIndex, m.hitAt));
+    }
+    const matchedText = snippet.slice(m.hitAt, m.hitAt + m.hitLen);
+    result += `**\`${escapeForMarkdown(matchedText)}\`**`;
+    lastIndex = m.hitAt + m.hitLen;
+  }
+  if (lastIndex < snippet.length) {
+    result += escapeForMarkdown(snippet.slice(lastIndex));
+  }
+  return result;
+}
+
+function buildSearchHitTooltip(
+  node: SearchHitNode,
+  hidden = false,
+  compiled?: CompiledSearchQuery | null,
+): vscode.MarkdownString {
   const md = new vscode.MarkdownString(undefined, true);
   md.isTrusted = false;
   md.appendMarkdown(`**${escapeForMarkdown(formatLocationLabel(node.hit))} ${formatRoleLabel(node.hit.role, node.hit.source)}**  \n`);
-  md.appendMarkdown(`${escapeForMarkdown(node.hit.snippet)}\n`);
+  const effectiveCompiled =
+    compiled ?? (node.query ? compileSearchQuery(node.pageSearchSeed?.queryInput || node.query, node.pageSearchSeed?.caseSensitive ?? false) : null);
+  const matches = effectiveCompiled ? effectiveCompiled.locateAll(node.hit.snippet, 10) : [];
+  const snippetMd = renderHighlightedSnippetMarkdown(node.hit.snippet, matches);
+  md.appendMarkdown(`${snippetMd}\n`);
   if (hidden) {
     md.appendMarkdown(`\n${escapeForMarkdown(t("tree.tooltip.visibility", t("tree.description.hidden")))}  \n`);
   }

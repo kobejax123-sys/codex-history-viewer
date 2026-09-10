@@ -6393,6 +6393,12 @@ body.vscode-high-contrast-light #mermaidPaneRoot {
   color: var(--chv-fg);
 }
 
+.tocHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 #tocList {
   flex: 1;
   overflow-y: auto;

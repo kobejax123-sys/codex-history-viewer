@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.15.3] - 2026-09-10
+
+### Added
+
+- Session outline (TOC) drawer in Session Viewer: lists all user prompts with timestamps and diff badges, providing smooth scroll jump and highlight animation.
+- Clean QA Markdown export and copy actions: strips CLI boilerplate, tool call JSON, and command outputs, outputting clean questions, answers, and code blocks for notes and sharing.
+- Enhanced search result tree presentation: native keyword highlights on tree items, smart word-boundary snippet clipping without word truncation, and auto-expanded search hits.
+
 ## [2.15.2] - 2026-09-09
 
 ### Added

@@ -1250,7 +1250,10 @@ export class ChatPanelManager implements vscode.Disposable {
   <aside id="tocOverlay" hidden>
     <div id="tocHeader">
       <div id="tocTitle"></div>
-      <button id="btnTocClose" type="button" class="toolbarIconBtn"></button>
+      <div class="tocHeaderActions">
+        <button id="btnTocCopyClean" type="button" class="toolbarIconBtn"></button>
+        <button id="btnTocClose" type="button" class="toolbarIconBtn"></button>
+      </div>
     </div>
     <div id="tocList" role="list"></div>
   </aside>
@@ -1352,6 +1355,12 @@ export class ChatPanelManager implements vscode.Disposable {
         await vscode.commands.executeCommand("codexHistoryViewer.openSessionMarkdown", {
           fsPath: state.fsPath,
           revealMessageIndex,
+        });
+        return;
+      }
+      case "copyCleanMarkdown": {
+        await vscode.commands.executeCommand("codexHistoryViewer.copyCleanMarkdown", {
+          fsPath: state.fsPath,
         });
         return;
       }
@@ -4066,6 +4075,7 @@ export class ChatPanelManager implements vscode.Disposable {
       tocTooltip: t("chat.toc.tooltip"),
       tocEmpty: t("chat.toc.empty"),
       tocClose: t("chat.toc.close"),
+      tocCopyClean: t("chat.toc.copyClean"),
       usageTotal: t("chat.usage.total"),
       usageContextWindow: t("chat.usage.contextWindow"),
       usageContextUsed: t("chat.usage.contextUsed"),

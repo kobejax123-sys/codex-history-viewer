@@ -552,8 +552,23 @@ function buildAround(text: string, hitAt: number, needleLen: number): string {
   const before = 40;
   const after = 80;
   const safeNeedleLen = Math.max(1, needleLen);
-  const start = Math.max(0, hitAt - before);
-  const end = Math.min(text.length, hitAt + safeNeedleLen + after);
+  let start = Math.max(0, hitAt - before);
+  let end = Math.min(text.length, hitAt + safeNeedleLen + after);
+
+  // Snap to whitespace boundaries near start and end to avoid word truncations
+  if (start > 0) {
+    const spaceIndex = text.indexOf(" ", start);
+    if (spaceIndex !== -1 && spaceIndex < hitAt && spaceIndex - start <= 12) {
+      start = spaceIndex + 1;
+    }
+  }
+  if (end < text.length) {
+    const spaceIndex = text.lastIndexOf(" ", end);
+    if (spaceIndex !== -1 && spaceIndex > hitAt + safeNeedleLen && end - spaceIndex <= 12) {
+      end = spaceIndex;
+    }
+  }
+
   const head = start > 0 ? "..." : "";
   const tail = end < text.length ? "..." : "";
   return `${head}${text.slice(start, end)}${tail}`;

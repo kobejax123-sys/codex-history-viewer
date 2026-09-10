@@ -2,7 +2,7 @@
 
 Browse, search, organize, and resume past Codex CLI / Claude Code sessions through the official VS Code extensions or prepared CLI commands.
 
-Latest release: **2.15.2** (2026-09-09).
+Latest release: **2.15.3** (2026-09-10).
 
 ![Codex History Viewer screenshot](media/screenshot.png)
 
@@ -271,6 +271,12 @@ For the primary user-facing commands with descriptions, see:
 - The first **Resume in Codex** may show a VS Code security prompt for the target extension URI. Click **Open** to continue.
 - If the official Codex extension stops reopening a session, try `Developer: Reload Webviews`, then `Developer: Restart Extension Host`, then `Developer: Reload Window`.
 - **Move to Archive** and **Move to Codex History** use the official Codex provider when available. Moving archived sessions back to normal history can fall back to a filesystem move if needed.
+
+## What's New in 2.15.3
+
+- **Session Outline (TOC)**: Quickly browse and jump through all user prompts in long sessions via a slide-out outline drawer in the Session Viewer toolbar.
+- **Clean QA Markdown Export & Copy**: Easily export or copy clean conversation notes without tool execution parameters, CLI boilerplate, or environment noise.
+- **Search Result Highlights**: Search result hits in the sidebar tree now highlight matched keywords natively and snap context snippets to word boundaries.
 
 ## What's New in 2.15.2
 

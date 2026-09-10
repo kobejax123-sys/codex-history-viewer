@@ -84,6 +84,8 @@
   "cmd.cleanupHandoffs": "引き継ぎファイルを削除",
   "cmd.cleanupMissingPins": "見つからないピン留めを解除",
   "cmd.exportSessions": "セッションをエクスポート...",
+  "cmd.copyCleanMarkdown": "クリーンなQ&A Markdownをコピー",
+  "cmd.openSessionCleanMarkdown": "クリーンなQ&A Markdownを開く",
   "cmd.importSessions": "セッションをインポート...",
   "cmd.searchRunPreset": "保存済み検索を実行...",
   "cmd.searchRunRecent": "検索履歴から実行...",

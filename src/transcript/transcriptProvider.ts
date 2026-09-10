@@ -36,23 +36,27 @@ export class TranscriptContentProvider implements vscode.TextDocumentContentProv
     const session = this.resolveSessionFromUri(uri);
     if (!session) return "";
 
-    const key = normalizeCacheKey(session.fsPath);
+    const isClean = new URLSearchParams(uri.query).get("clean") === "1";
+    const baseKey = normalizeCacheKey(session.fsPath);
+    const key = isClean ? `${baseKey}:clean` : baseKey;
     const cached = this.cache.get(key);
     if (cached) return cached.content;
 
-    const rendered = await this.renderSession(session);
+    const rendered = await this.renderSession(session, isClean);
     this.cache.set(key, rendered);
     return rendered.content;
   }
 
   public async openSessionTranscript(
     session: SessionSummary,
-    options: { preview: boolean; revealMessageIndex?: number } = { preview: true },
+    options: { preview: boolean; revealMessageIndex?: number; cleanQaOnly?: boolean } = { preview: true },
   ): Promise<void> {
     try {
-      const uri = this.resolveOpenUri(session);
-      const rendered = await this.renderSession(session);
-      this.cache.set(normalizeCacheKey(session.fsPath), rendered);
+      const isClean = options.cleanQaOnly === true;
+      const uri = this.resolveOpenUri(session, isClean);
+      const rendered = await this.renderSession(session, isClean);
+      const cacheKey = isClean ? `${normalizeCacheKey(session.fsPath)}:clean` : normalizeCacheKey(session.fsPath);
+      this.cache.set(cacheKey, rendered);
       this.onDidChangeEmitter.fire(uri);
 
       const doc = await vscode.workspace.openTextDocument(uri);
@@ -80,7 +84,11 @@ export class TranscriptContentProvider implements vscode.TextDocumentContentProv
   public releaseDocument(uri: vscode.Uri): void {
     if (!isTranscriptDocumentUri(uri, this.scheme)) return;
     const fsPath = getSessionFsPathFromUri(uri);
-    if (fsPath) this.cache.delete(normalizeCacheKey(fsPath));
+    if (fsPath) {
+      const baseKey = normalizeCacheKey(fsPath);
+      this.cache.delete(baseKey);
+      this.cache.delete(`${baseKey}:clean`);
+    }
   }
 
   public dispose(): void {
@@ -90,6 +98,7 @@ export class TranscriptContentProvider implements vscode.TextDocumentContentProv
 
   private async renderSession(
     session: SessionSummary,
+    cleanQaOnly = false,
   ): Promise<{ content: string; messageLineMap: Map<number, number> }> {
     const { timeZone } = resolveDateTimeSettings();
     const ann = this.annotationStore.get(session.fsPath);
@@ -97,6 +106,8 @@ export class TranscriptContentProvider implements vscode.TextDocumentContentProv
       typeof session.meta?.cwd === "string" ? this.projectAssociationStore.getDisplayCwd(session.meta.cwd) : null;
     return renderTranscript(session.fsPath, {
       timeZone,
+      cleanQaOnly,
+      title: session.displayTitle,
       locationLabel:
         session.storage.archiveState === "archived" ? t("session.location.archived") : t("session.location.active"),
       displayCwd,
@@ -107,17 +118,24 @@ export class TranscriptContentProvider implements vscode.TextDocumentContentProv
     });
   }
 
-  private resolveOpenUri(session: SessionSummary): vscode.Uri {
+  private resolveOpenUri(session: SessionSummary, cleanQaOnly = false): vscode.Uri {
     const sessionKey = normalizeCacheKey(session.fsPath);
     const existingDocument = vscode.workspace.textDocuments.find((document) => {
       if (!isTranscriptDocumentUri(document.uri, this.scheme)) return false;
       const fsPath = getSessionFsPathFromUri(document.uri);
+      const isDocClean = new URLSearchParams(document.uri.query).get("clean") === "1";
+      if (isDocClean !== cleanQaOnly) return false;
       return fsPath ? normalizeCacheKey(fsPath) === sessionKey : false;
     });
     if (existingDocument) return existingDocument.uri;
 
-    const query = new URLSearchParams({ fsPath: session.fsPath }).toString();
-    const fileName = buildTranscriptDocumentFileName(session.displayTitle);
+    const params: Record<string, string> = { fsPath: session.fsPath };
+    if (cleanQaOnly) params.clean = "1";
+    const query = new URLSearchParams(params).toString();
+    const baseFileName = buildTranscriptDocumentFileName(session.displayTitle);
+    const fileName = cleanQaOnly
+      ? `${baseFileName.replace(/\.md$/, "")} (Clean QA).md`
+      : baseFileName;
     return vscode.Uri.from({ scheme: this.scheme, path: `/${fileName}`, query });
   }
 

@@ -3,7 +3,7 @@
   "displayName": "%ext.displayName%",
   "description": "%ext.description%",
   "icon": "resources/extension-icon.png",
-  "version": "2.15.2",
+  "version": "2.15.3",
   "publisher": "hiztam",
   "author": "HizTam",
   "license": "MIT",
@@ -1341,6 +1341,18 @@
         "title": "%cmd.exportSessions%",
         "category": "%cmd.category%",
         "icon": "$(export)"
+      },
+      {
+        "command": "codexHistoryViewer.copyCleanMarkdown",
+        "title": "%cmd.copyCleanMarkdown%",
+        "category": "%cmd.category%",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "codexHistoryViewer.openSessionCleanMarkdown",
+        "title": "%cmd.openSessionCleanMarkdown%",
+        "category": "%cmd.category%",
+        "icon": "$(markdown)"
       },
       {
         "command": "codexHistoryViewer.importSessions",

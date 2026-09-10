@@ -109,6 +109,8 @@
   "cmd.cleanupHandoffs": "Delete Handoff Files",
   "cmd.cleanupMissingPins": "Remove Missing Pins",
   "cmd.exportSessions": "Export Sessions...",
+  "cmd.copyCleanMarkdown": "Copy Clean QA Markdown",
+  "cmd.openSessionCleanMarkdown": "Open Clean QA Markdown",
   "cmd.importSessions": "Import Sessions...",
   "cmd.searchRunPreset": "Run Saved Search...",
   "cmd.searchRunRecent": "Run from Search History...",

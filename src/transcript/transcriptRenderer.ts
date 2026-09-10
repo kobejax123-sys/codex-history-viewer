@@ -10,6 +10,7 @@ import {
   detectClaudeMaterializedMessageRole,
   extractClaudeMessageContent,
   extractCodexMessageContent,
+  isCodexProtocolContextContent,
 } from "../chat/chatAttachments";
 import { createClaudePastedPromptResolver, type ClaudePastedPromptResolver } from "../chat/claudePastedPrompt";
 import {
@@ -29,9 +30,12 @@ export async function renderTranscript(
     annotation?: { tags?: readonly string[]; note?: string };
     locationLabel?: string;
     displayCwd?: string | null;
+    cleanQaOnly?: boolean;
+    title?: string;
   },
 ): Promise<{ content: string; messageLineMap: Map<number, number> }> {
   const timeZone = options.timeZone;
+  const cleanQaOnly = options.cleanQaOnly === true;
 
   const lines: string[] = [];
   const messageLineMap = new Map<number, number>();
@@ -44,28 +48,46 @@ export async function renderTranscript(
   const stream = fs.createReadStream(fsPath, { encoding: "utf8" });
   const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
 
-  lines.push(`# ${historySource === "claude" ? "Claude Code" : "Codex"} Session`);
-  lines.push(``);
-  lines.push(`- File: \`${fsPath}\``);
-  lines.push(`- History Source: \`${historySource}\``);
-  if (options.locationLabel) lines.push(`- Location: \`${options.locationLabel}\``);
-  if (meta?.timestampIso) lines.push(`- Start: \`${formatIsoToLocal(meta.timestampIso, timeZone, { withSeconds: false })}\``);
-  if (meta?.cwd) lines.push(`- CWD: \`${meta.cwd}\``);
   const displayCwd = typeof options.displayCwd === "string" ? options.displayCwd.trim() : "";
-  if (displayCwd && meta?.cwd && displayCwd !== meta.cwd) lines.push(`- Display CWD: \`${displayCwd}\``);
-  if (meta?.originator) lines.push(`- Originator: \`${meta.originator}\``);
-  if (meta?.cliVersion) lines.push(`- CLI: \`${meta.cliVersion}\``);
-  if (meta?.modelProvider) lines.push(`- Model Provider: \`${meta.modelProvider}\``);
-  if (meta?.source) lines.push(`- Source: \`${meta.source}\``);
   const tags = Array.isArray(options.annotation?.tags)
     ? options.annotation!.tags.map((tag) => String(tag ?? "").trim()).filter((tag) => tag.length > 0)
     : [];
   const note = typeof options.annotation?.note === "string" ? options.annotation.note.trim() : "";
-  if (tags.length > 0) lines.push(`- Tags: ${tags.map((tag) => `\`#${tag}\``).join(", ")}`);
-  if (note) lines.push(`- Note: ${note}`);
-  lines.push(``);
-  lines.push(`---`);
-  lines.push(``);
+
+  if (cleanQaOnly) {
+    const sessionTitle = options.title?.trim() || `${historySource === "claude" ? "Claude Code" : "Codex"} Session`;
+    lines.push(`# ${sessionTitle}`);
+    lines.push(``);
+    lines.push(`- **Source**: \`${historySource === "claude" ? "Claude Code" : "Codex"}\``);
+    if (meta?.timestampIso) {
+      lines.push(`- **Date**: \`${formatIsoToLocal(meta.timestampIso, timeZone, { withSeconds: false })}\``);
+    }
+    const cwd = displayCwd || meta?.cwd;
+    if (cwd) lines.push(`- **Workspace**: \`${cwd}\``);
+    if (tags.length > 0) lines.push(`- **Tags**: ${tags.map((tag) => `\`#${tag}\``).join(", ")}`);
+    if (note) lines.push(`- **Note**: ${note}`);
+    lines.push(``);
+    lines.push(`---`);
+    lines.push(``);
+  } else {
+    lines.push(`# ${historySource === "claude" ? "Claude Code" : "Codex"} Session`);
+    lines.push(``);
+    lines.push(`- File: \`${fsPath}\``);
+    lines.push(`- History Source: \`${historySource}\``);
+    if (options.locationLabel) lines.push(`- Location: \`${options.locationLabel}\``);
+    if (meta?.timestampIso) lines.push(`- Start: \`${formatIsoToLocal(meta.timestampIso, timeZone, { withSeconds: false })}\``);
+    if (meta?.cwd) lines.push(`- CWD: \`${meta.cwd}\``);
+    if (displayCwd && meta?.cwd && displayCwd !== meta.cwd) lines.push(`- Display CWD: \`${displayCwd}\``);
+    if (meta?.originator) lines.push(`- Originator: \`${meta.originator}\``);
+    if (meta?.cliVersion) lines.push(`- CLI: \`${meta.cliVersion}\``);
+    if (meta?.modelProvider) lines.push(`- Model Provider: \`${meta.modelProvider}\``);
+    if (meta?.source) lines.push(`- Source: \`${meta.source}\``);
+    if (tags.length > 0) lines.push(`- Tags: ${tags.map((tag) => `\`#${tag}\``).join(", ")}`);
+    if (note) lines.push(`- Note: ${note}`);
+    lines.push(``);
+    lines.push(`---`);
+    lines.push(``);
+  }
 
   let msgIndex = 0;
   let lastToolCallId: string | undefined;
@@ -85,6 +107,7 @@ export async function renderTranscript(
         timeZone,
         msgIndex,
         lastToolCallId,
+        cleanQaOnly,
       });
       if (codexResult.handled) {
         msgIndex = codexResult.msgIndex;
@@ -98,6 +121,7 @@ export async function renderTranscript(
         msgIndex,
         lastToolCallId,
         pastedPromptResolver,
+        cleanQaOnly,
       });
       if (claudeResult.handled) {
         msgIndex = claudeResult.msgIndex;
@@ -120,9 +144,9 @@ export async function renderTranscript(
 async function renderCodexRecord(
   lines: string[],
   messageLineMap: Map<number, number>,
-  params: { obj: any; timeZone: string; msgIndex: number; lastToolCallId?: string },
+  params: { obj: any; timeZone: string; msgIndex: number; lastToolCallId?: string; cleanQaOnly?: boolean },
 ): Promise<{ handled: boolean; msgIndex: number; lastToolCallId?: string }> {
-  const { obj, timeZone } = params;
+  const { obj, timeZone, cleanQaOnly } = params;
   let { msgIndex, lastToolCallId } = params;
 
   if (obj?.type !== "response_item") return { handled: false, msgIndex, lastToolCallId };
@@ -132,14 +156,21 @@ async function renderCodexRecord(
     if (role !== "user" && role !== "assistant" && role !== "developer") {
       return { handled: true, msgIndex, lastToolCallId };
     }
+    if (cleanQaOnly && role !== "user" && role !== "assistant") {
+      return { handled: true, msgIndex, lastToolCallId };
+    }
 
     const extracted = await extractCodexMessageContent(obj?.payload?.content, undefined, { enabled: false });
     const text = normalizeWhitespace(extracted.text);
-    const attachmentLines = buildAttachmentSummaryLines(extracted.attachments);
+    const attachmentLines = cleanQaOnly ? [] : buildAttachmentSummaryLines(extracted.attachments);
     if (!text && attachmentLines.length === 0) return { handled: true, msgIndex, lastToolCallId };
 
+    if (cleanQaOnly && role === "user" && (isBoilerplateUserMessage(text) || isCodexProtocolContextContent(obj?.payload?.content))) {
+      return { handled: true, msgIndex, lastToolCallId };
+    }
+
     const ts = typeof obj?.timestamp === "string" ? obj.timestamp : undefined;
-    const ctx = role !== "assistant" && isBoilerplateUserMessage(text) ? " (context)" : "";
+    const ctx = !cleanQaOnly && role !== "assistant" && isBoilerplateUserMessage(text) ? " (context)" : "";
 
     if (role === "user" || role === "assistant") {
       msgIndex += 1;
@@ -148,10 +179,18 @@ async function renderCodexRecord(
     } else {
       lines.push(`## ${capitalize(role)}${ctx}`);
     }
-    if (ts) lines.push(`- Timestamp: \`${formatIsoToLocal(ts, timeZone, { withSeconds: true })}\``);
+    if (!cleanQaOnly && ts) lines.push(`- Timestamp: \`${formatIsoToLocal(ts, timeZone, { withSeconds: true })}\``);
     lines.push(``);
     appendMessageBodyLines(lines, attachmentLines, text);
+    if (cleanQaOnly && role === "assistant") {
+      lines.push(`---`);
+      lines.push(``);
+    }
     lastToolCallId = undefined;
+    return { handled: true, msgIndex, lastToolCallId };
+  }
+
+  if (cleanQaOnly) {
     return { handled: true, msgIndex, lastToolCallId };
   }
 
@@ -260,15 +299,17 @@ async function renderClaudeRecord(
     msgIndex: number;
     lastToolCallId?: string;
     pastedPromptResolver?: ClaudePastedPromptResolver;
+    cleanQaOnly?: boolean;
   },
 ): Promise<{ handled: boolean; msgIndex: number; lastToolCallId?: string }> {
-  const { obj, timeZone } = params;
+  const { obj, timeZone, cleanQaOnly } = params;
   let { msgIndex, lastToolCallId } = params;
 
   const role = detectClaudeMessageRole(obj);
   if (!role) return { handled: false, msgIndex, lastToolCallId };
 
   if (isClaudeCrossSessionInboundRecord(obj)) {
+    if (cleanQaOnly) return { handled: true, msgIndex, lastToolCallId };
     msgIndex += 1;
     const crossSessionMessage = extractClaudeCrossSessionMessage(obj);
     if (!crossSessionMessage) return { handled: true, msgIndex, lastToolCallId };
@@ -286,23 +327,39 @@ async function renderClaudeRecord(
     return { handled: true, msgIndex, lastToolCallId };
   }
 
+  if (cleanQaOnly && role !== "user" && role !== "assistant") {
+    return { handled: true, msgIndex, lastToolCallId };
+  }
+
   const rawContent = getClaudeMessageContent(obj);
   const parsed = parseClaudeMessageContent(rawContent);
   const pastedPrompt = role === "user" ? await params.pastedPromptResolver?.resolve(obj, rawContent) : undefined;
   const extracted = await extractClaudeMessageContent(rawContent, undefined, { enabled: false }, { role, pastedPrompt });
   const text = normalizeWhitespace(extracted.text);
-  const attachmentLines = buildAttachmentSummaryLines(extracted.attachments);
+  const attachmentLines = cleanQaOnly ? [] : buildAttachmentSummaryLines(extracted.attachments);
   const ts = typeof obj?.timestamp === "string" ? obj.timestamp : undefined;
 
   if (text || attachmentLines.length > 0) {
-    const ctx = role !== "assistant" && isBoilerplateUserMessage(text) ? " (context)" : "";
+    if (cleanQaOnly && role === "user" && isBoilerplateUserMessage(text)) {
+      return { handled: true, msgIndex, lastToolCallId };
+    }
+
+    const ctx = !cleanQaOnly && role !== "assistant" && isBoilerplateUserMessage(text) ? " (context)" : "";
     msgIndex += 1;
     messageLineMap.set(msgIndex, lines.length + 1);
     lines.push(`## [#${msgIndex}] ${capitalize(role)}${ctx}`);
-    if (ts) lines.push(`- Timestamp: \`${formatIsoToLocal(ts, timeZone, { withSeconds: true })}\``);
+    if (!cleanQaOnly && ts) lines.push(`- Timestamp: \`${formatIsoToLocal(ts, timeZone, { withSeconds: true })}\``);
     lines.push(``);
     appendMessageBodyLines(lines, attachmentLines, text);
+    if (cleanQaOnly && role === "assistant") {
+      lines.push(`---`);
+      lines.push(``);
+    }
     lastToolCallId = undefined;
+  }
+
+  if (cleanQaOnly) {
+    return { handled: true, msgIndex, lastToolCallId };
   }
 
   for (const toolCall of parsed.toolCalls) {
