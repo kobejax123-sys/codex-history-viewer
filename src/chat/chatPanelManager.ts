@@ -1219,6 +1219,7 @@ export class ChatPanelManager implements vscode.Disposable {
     <button id="btnPathMode" type="button" class="toolbarIconBtn"></button>
     <button id="btnScrollTop" type="button" class="toolbarIconBtn"></button>
     <button id="btnScrollBottom" type="button" class="toolbarIconBtn"></button>
+    <button id="btnToc" type="button" class="toolbarIconBtn"></button>
     <button id="btnPageSearch" type="button" class="toolbarIconBtn"></button>
     <button id="btnPerformanceMode" type="button" class="toolbarIconBtn"></button>
     <button id="btnAutoRefresh" type="button" class="toolbarIconBtn" hidden></button>
@@ -1246,6 +1247,13 @@ export class ChatPanelManager implements vscode.Disposable {
     </div>
     <div id="pageSearchResults" role="listbox" aria-live="polite"></div>
   </div>
+  <aside id="tocOverlay" hidden>
+    <div id="tocHeader">
+      <div id="tocTitle"></div>
+      <button id="btnTocClose" type="button" class="toolbarIconBtn"></button>
+    </div>
+    <div id="tocList" role="list"></div>
+  </aside>
   <div id="scrollRoot">
     <div id="annotation"></div>
     <div id="meta"></div>
@@ -4054,6 +4062,10 @@ export class ChatPanelManager implements vscode.Disposable {
       usageCacheRead: t("chat.usage.cacheRead"),
       usageCacheWrite: t("chat.usage.cacheWrite"),
       usageReasoning: t("chat.usage.reasoning"),
+      tocTitle: t("chat.toc.title"),
+      tocTooltip: t("chat.toc.tooltip"),
+      tocEmpty: t("chat.toc.empty"),
+      tocClose: t("chat.toc.close"),
       usageTotal: t("chat.usage.total"),
       usageContextWindow: t("chat.usage.contextWindow"),
       usageContextUsed: t("chat.usage.contextUsed"),

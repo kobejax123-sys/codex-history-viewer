@@ -19,6 +19,11 @@
   const btnScrollTop = document.getElementById("btnScrollTop");
   const btnScrollBottom = document.getElementById("btnScrollBottom");
   const btnPageSearch = document.getElementById("btnPageSearch");
+  const btnToc = document.getElementById("btnToc");
+  const tocOverlayEl = document.getElementById("tocOverlay");
+  const tocTitleEl = document.getElementById("tocTitle");
+  const btnTocClose = document.getElementById("btnTocClose");
+  const tocListEl = document.getElementById("tocList");
   const btnPerformanceMode = document.getElementById("btnPerformanceMode");
   const btnAutoRefresh = document.getElementById("btnAutoRefresh");
   const btnBranchMap = document.getElementById("btnBranchMap");
@@ -63,6 +68,8 @@
   const CODE_COMMENT_ATTRIBUTE_KEYS = new Set(["file", "title", "body", "start", "end", "priority"]);
   const COPY_ICON_SVG =
     '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 1.5H6A1.5 1.5 0 0 0 4.5 3H3.75A1.75 1.75 0 0 0 2 4.75v8.5C2 14.216 2.784 15 3.75 15h8.5c.966 0 1.75-.784 1.75-1.75v-8.5C14 3.784 13.216 3 12.25 3H11.5A1.5 1.5 0 0 0 10 1.5Zm-4 1H10a.5.5 0 0 1 .5.5V3H5.5V3a.5.5 0 0 1 .5-.5ZM3.75 4h8.5a.75.75 0 0 1 .75.75v8.5a.75.75 0 0 1-.75.75h-8.5a.75.75 0 0 1-.75-.75v-8.5A.75.75 0 0 1 3.75 4Z"/></svg>';
+  const TOC_ICON_SVG =
+    '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 3.75A.75.75 0 0 1 2.75 3h10.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 3.75Zm0 4.25a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 8Zm0 4.25a.75.75 0 0 1 .75-.75h6.5a.75.75 0 0 1 0 1.5h-6.5a.75.75 0 0 1-.75-.75Z"/></svg>';
   const REVEAL_FILE_ICON_SVG =
     '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.75 2.5h4.1c.2 0 .39.08.53.22L7.66 4h4.59A1.75 1.75 0 0 1 14 5.75v.75h-1.5v-.75a.25.25 0 0 0-.25-.25H7.35a.75.75 0 0 1-.53-.22L5.54 4H1.75a.25.25 0 0 0-.25.25v7.5c0 .1.06.19.15.23L3.4 7.62A1.75 1.75 0 0 1 5.02 6.5h8.23a1.25 1.25 0 0 1 1.16 1.72l-1.9 4.75A1.75 1.75 0 0 1 10.89 14H1.75A1.75 1.75 0 0 1 0 12.25v-8A1.75 1.75 0 0 1 1.75 2.5Zm3.27 5.5a.25.25 0 0 0-.23.16L3.05 12.5h7.84a.25.25 0 0 0 .23-.16L12.86 8H5.02Z"/></svg>';
   const RELOAD_ICON_SVG =
@@ -426,6 +433,7 @@
   let allDiffPatchGroupPreviouslyWideKeys = new Set();
   let expandedAttachmentDetails = new Set();
   let expandedProtocolContextKeys = new Set();
+  let tocOpen = false;
   let pageSearchTemporaryAttachmentDetailKeys = new Set();
   let expandedUsageCardKeys = new Set();
   let wideTimelineCardKeys = new Set();
@@ -706,6 +714,7 @@
   setToolbarIconButton(btnPathMode, PATH_RECORDED_ICON_SVG, "Recorded path");
   setToolbarIconButton(btnScrollTop, SCROLL_TOP_ICON_SVG, "Top");
   setToolbarIconButton(btnScrollBottom, SCROLL_BOTTOM_ICON_SVG, "Bottom");
+  setToolbarIconButton(btnToc, TOC_ICON_SVG, "Outline");
   setToolbarIconButton(btnPageSearch, SEARCH_ICON_SVG, "Find");
   setToolbarIconButton(btnPerformanceMode, PERFORMANCE_NORMAL_ICON_SVG, "Performance");
   setToolbarIconButton(btnAutoRefresh, AUTO_REFRESH_ICON_SVG, "Auto refresh");
@@ -716,6 +725,7 @@
   setToolbarIconButton(btnPageSearchPrev, NAV_UP_ICON_SVG, "Previous match");
   setToolbarIconButton(btnPageSearchNext, NAV_DOWN_ICON_SVG, "Next match");
   setToolbarIconButton(btnPageSearchClose, CLOSE_ICON_SVG, "Close search");
+  setToolbarIconButton(btnTocClose, CLOSE_ICON_SVG, "Close outline");
 
   if (btnResumeInCodex instanceof HTMLElement) {
     btnResumeInCodex.addEventListener("click", handleResumePrimaryClick);
@@ -734,6 +744,16 @@
   if (btnCustomTitle instanceof HTMLElement) {
     btnCustomTitle.addEventListener("click", () => {
       vscode.postMessage({ type: "manageCustomTitle" });
+    });
+  }
+  if (btnToc instanceof HTMLElement) {
+    btnToc.addEventListener("click", () => {
+      toggleToc();
+    });
+  }
+  if (btnTocClose instanceof HTMLElement) {
+    btnTocClose.addEventListener("click", () => {
+      closeToc();
     });
   }
   btnPageSearch.addEventListener("click", () => {
@@ -969,6 +989,11 @@
   document.addEventListener("keydown", (event) => {
     if (handleMermaidPaneKeydown(event)) return;
     handleStickyUserKeyScrollIntent(event);
+    if (event.key === "Escape" && isTocOpen()) {
+      event.preventDefault();
+      closeToc();
+      return;
+    }
     if (event.key === "Escape" && isImagePreviewOpen()) {
       event.preventDefault();
       closeImagePreview();
@@ -2139,6 +2164,9 @@
       setToolbarIconButton(btnCustomTitle, CUSTOM_TITLE_ICON_SVG, customTitleTooltip);
     }
 
+    const tocTooltip = getSafeUiText(i18n.tocTooltip, "Session Outline");
+    setToolbarIconButton(btnToc, TOC_ICON_SVG, tocTooltip);
+
     const pageSearchLabel = getSafeUiText(i18n.pageSearch, "Find");
     const pageSearchTooltip = getSafeUiText(i18n.pageSearchTooltip, "Toggle in-page search");
     setToolbarIconButton(btnPageSearch, SEARCH_ICON_SVG, pageSearchTooltip);
@@ -2239,6 +2267,10 @@
     setToolbarIconButton(btnPageSearchPrev, NAV_UP_ICON_SVG, prevTooltip);
     setToolbarIconButton(btnPageSearchNext, NAV_DOWN_ICON_SVG, nextTooltip);
     setToolbarIconButton(btnPageSearchClose, CLOSE_ICON_SVG, closeTooltip);
+    if (btnTocClose instanceof HTMLElement) {
+      const closeTocTooltip = getSafeUiText(i18n.tocClose, "Close Outline");
+      setToolbarIconButton(btnTocClose, CLOSE_ICON_SVG, closeTocTooltip);
+    }
     updatePageSearchStatus();
     scheduleToolbarCompactMode();
   }
@@ -6588,6 +6620,7 @@
     expandedPatchGroupFileLists = new Set();
     expandedAttachmentDetails = new Set();
     expandedProtocolContextKeys = new Set();
+    closeToc();
   }
 
   function resetPatchEntryDetailsCache() {
@@ -8614,6 +8647,7 @@
       updatePageSearchStatus();
     }
     syncMermaidPaneAfterTimelineRender();
+    if (isTocOpen()) renderTocContent();
     } finally {
       renderDepth = Math.max(0, renderDepth - 1);
     }
@@ -10861,6 +10895,109 @@
   function normalizeMemoryCitationRolloutIds(value) {
     if (!Array.isArray(value)) return [];
     return value.map((id) => (typeof id === "string" ? id.trim() : "")).filter((id) => id.length > 0);
+  }
+
+  function isTocOpen() {
+    return tocOpen && tocOverlayEl instanceof HTMLElement && !tocOverlayEl.hidden;
+  }
+
+  function openToc() {
+    if (!(tocOverlayEl instanceof HTMLElement)) return;
+    tocOpen = true;
+    tocOverlayEl.hidden = false;
+    if (btnToc instanceof HTMLElement) {
+      btnToc.setAttribute("aria-expanded", "true");
+      btnToc.classList.add("active");
+    }
+    renderTocContent();
+  }
+
+  function closeToc() {
+    if (!(tocOverlayEl instanceof HTMLElement)) return;
+    tocOpen = false;
+    tocOverlayEl.hidden = true;
+    if (btnToc instanceof HTMLElement) {
+      btnToc.setAttribute("aria-expanded", "false");
+      btnToc.classList.remove("active");
+    }
+  }
+
+  function toggleToc() {
+    if (isTocOpen()) closeToc();
+    else openToc();
+  }
+
+  function renderTocContent() {
+    if (!(tocListEl instanceof HTMLElement)) return;
+    tocListEl.textContent = "";
+    if (tocTitleEl instanceof HTMLElement) {
+      tocTitleEl.textContent = getSafeUiText(i18n.tocTitle, "Session Outline");
+    }
+
+    if (!model || !Array.isArray(model.items)) {
+      const empty = el("div", { className: "tocEmpty" });
+      empty.textContent = getSafeUiText(i18n.tocEmpty, "No user questions found in this session");
+      tocListEl.appendChild(empty);
+      return;
+    }
+
+    const userItems = [];
+    for (let i = 0; i < model.items.length; i++) {
+      const item = model.items[i];
+      if (item && item.type === "message" && item.role === "user" && typeof item.messageIndex === "number") {
+        userItems.push({ item, index: i });
+      }
+    }
+
+    if (userItems.length === 0) {
+      const empty = el("div", { className: "tocEmpty" });
+      empty.textContent = getSafeUiText(i18n.tocEmpty, "No user questions found in this session");
+      tocListEl.appendChild(empty);
+      return;
+    }
+
+    for (let u = 0; u < userItems.length; u++) {
+      const { item, index } = userItems[u];
+      const messageIndex = item.messageIndex;
+
+      const nextUserIndex = u + 1 < userItems.length ? userItems[u + 1].index : model.items.length;
+      let hasPatches = false;
+      for (let k = index + 1; k < nextUserIndex; k++) {
+        const turnItem = model.items[k];
+        if (turnItem?.type === "patchGroup") hasPatches = true;
+      }
+
+      const row = el("button", { type: "button", className: "tocItem" });
+      row.dataset.messageIndex = String(messageIndex);
+
+      const header = el("div", { className: "tocItemHeader" });
+      const badge = el("span", { className: "tocItemBadge", textContent: `#${messageIndex}` });
+      header.appendChild(badge);
+
+      if (typeof item.timestampIso === "string") {
+        const time = el("span", { className: "tocItemTime", textContent: formatIsoYmdHms(item.timestampIso) });
+        header.appendChild(time);
+      }
+
+      if (hasPatches) {
+        const patchTag = el("span", { className: "tag patch", textContent: "diff" });
+        header.appendChild(patchTag);
+      }
+
+      row.appendChild(header);
+
+      const textEl = el("div", { className: "tocItemText" });
+      const rawText = (item.requestText || item.text || "").trim();
+      textEl.textContent = rawText || "(Empty prompt)";
+      row.appendChild(textEl);
+
+      row.addEventListener("click", () => {
+        closeToc();
+        revealMessage(messageIndex);
+      });
+
+      tocListEl.appendChild(row);
+    }
   }
 
   function normalizeMemoryCitationLine(value) {
