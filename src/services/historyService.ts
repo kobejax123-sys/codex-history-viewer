@@ -50,11 +50,11 @@ interface HistoryInputStamp {
   readonly size: number;
 }
 
-const SUMMARY_CACHE_ALGO_VERSION = 29;
+const SUMMARY_CACHE_ALGO_VERSION = 30;
 const HISTORY_REFRESH_CONCURRENCY = 4;
 
-interface CacheFileV9 {
-  version: 9;
+interface CacheFileV10 {
+  version: 10;
   summaryAlgoVersion: number;
   codexAgentMetadataVersion?: typeof CODEX_AGENT_METADATA_VERSION;
   codexSessionsRoot: string;
@@ -118,7 +118,7 @@ interface HistoryBuildResult {
   sessions: SessionSummary[];
   historySources: SessionSummary[];
   logicalPlanSignatures: ReadonlyMap<string, string>;
-  cache: CacheFileV9;
+  cache: CacheFileV10;
   verifiedCacheKeys: Set<string>;
   metadataComplete: boolean;
   unstableFileCount: number;
@@ -283,7 +283,7 @@ export class HistoryService {
   private indexGeneration = 0;
   private indexInventoryGeneration = 0;
   private indexConfigKey = "";
-  private cacheForCurrentIndex: CacheFileV9 | null = null;
+  private cacheForCurrentIndex: CacheFileV10 | null = null;
   private cacheIndexGeneration = -1;
   private stateFingerprints: HistoryStateFingerprints | null = null;
   private persistedCacheFingerprint: string | null = null;
@@ -335,7 +335,7 @@ export class HistoryService {
 
   private commitIndexState(params: {
     index: HistoryIndex;
-    cache: CacheFileV9;
+    cache: CacheFileV10;
     configKey: string;
     verifiedCacheKeys: Set<string>;
     metadataComplete: boolean;
@@ -656,7 +656,7 @@ export class HistoryService {
     });
     const nextIndex = buildIndex(this.index.roots, nextSummaries, nextHistorySources);
     const complete = areAllCodexEntriesVerifiedForIndex(entries, nextIndex);
-    const nextCache: CacheFileV9 = {
+    const nextCache: CacheFileV10 = {
       ...cache,
       codexAgentMetadataVersion: complete ? CODEX_AGENT_METADATA_VERSION : undefined,
       entries,
@@ -864,7 +864,7 @@ export class HistoryService {
     const dateTimeSettingsKey = getDateTimeSettingsKey(dateTime);
 
     const cacheUri = this.getCacheUri();
-    let cache: CacheFileV9 | null = null;
+    let cache: CacheFileV10 | null = null;
     let cacheSource: "process" | "disk" | null = null;
     if (!options.forceRebuildCache) {
       const processCache =
@@ -1496,7 +1496,7 @@ export class HistoryService {
     roots: HistoryRoots;
     sessions: readonly SessionSummary[];
     historySources: readonly SessionSummary[];
-    cache: CacheFileV9;
+    cache: CacheFileV10;
     logicalPlanSignatures: ReadonlyMap<string, string>;
   }): HistoryStateFingerprints | null {
     const summaryFingerprint = (summary: SessionSummary): string | undefined =>
@@ -1565,7 +1565,7 @@ export class HistoryService {
     return fingerprints;
   }
 
-  private buildDurableCacheFingerprint(cache: CacheFileV9): string | undefined {
+  private buildDurableCacheFingerprint(cache: CacheFileV10): string | undefined {
     const cacheRows: unknown[] = [];
     for (const cacheKey of Object.keys(cache.entries).sort()) {
       const entry = cache.entries[cacheKey];
@@ -1646,10 +1646,10 @@ export class HistoryService {
     cache: unknown,
     dateTimeSettingsKey: string,
     config: CodexHistoryViewerConfig,
-  ): cache is CacheFileV9 {
+  ): cache is CacheFileV10 {
     if (!isPlainRecord(cache)) return false;
     return (
-      cache.version === 9 &&
+      cache.version === 10 &&
       cache.summaryAlgoVersion === SUMMARY_CACHE_ALGO_VERSION &&
       cache.codexSessionsRoot === config.sessionsRoot &&
       cache.codexArchivedSessionsRoot === config.codexArchivedSessionsRoot &&
@@ -1767,7 +1767,7 @@ function areSameLogicalPlanSignatures(
   return true;
 }
 
-function isCacheStructurallyReused(left: CacheFileV9, right: CacheFileV9): boolean {
+function isCacheStructurallyReused(left: CacheFileV10, right: CacheFileV10): boolean {
   if (
     left.version !== right.version ||
     left.summaryAlgoVersion !== right.summaryAlgoVersion ||
@@ -1893,9 +1893,9 @@ function buildHistoryCacheCandidate(
   dateTimeSettingsKey: string,
   entries: Record<string, CacheEntryV1>,
   metadataComplete: boolean,
-): CacheFileV9 {
+): CacheFileV10 {
   return {
-    version: 9,
+    version: 10,
     summaryAlgoVersion: SUMMARY_CACHE_ALGO_VERSION,
     ...(metadataComplete ? { codexAgentMetadataVersion: CODEX_AGENT_METADATA_VERSION } : {}),
     codexSessionsRoot: config.sessionsRoot,
@@ -1958,9 +1958,9 @@ function normalizeCacheEntries(rawEntries: Record<string, CacheEntryV1>): Normal
   return { entries, dropped };
 }
 
-function normalizeCacheFile(cache: CacheFileV9, entries: Record<string, CacheEntryV1>): CacheFileV9 {
+function normalizeCacheFile(cache: CacheFileV10, entries: Record<string, CacheEntryV1>): CacheFileV10 {
   return {
-    version: 9,
+    version: 10,
     summaryAlgoVersion: SUMMARY_CACHE_ALGO_VERSION,
     codexAgentMetadataVersion: cache.codexAgentMetadataVersion === CODEX_AGENT_METADATA_VERSION ? CODEX_AGENT_METADATA_VERSION : undefined,
     codexSessionsRoot: cache.codexSessionsRoot,
@@ -2076,7 +2076,22 @@ function normalizeCachedSummary(value: unknown, storageKey: string): SessionSumm
       role: message.role,
       text: message.text,
     })),
+    models: normalizeCachedModels(value.models),
   };
+}
+
+function normalizeCachedModels(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const models: string[] = [];
+  const seen = new Set<string>();
+  for (const candidate of value) {
+    if (typeof candidate !== "string") continue;
+    const model = candidate.trim();
+    if (!model || model.length > 80 || seen.has(model)) continue;
+    seen.add(model);
+    models.push(model);
+  }
+  return models.sort((a, b) => a.localeCompare(b));
 }
 
 function hasRequiredCachedSummaryStrings(value: Record<string, unknown>): boolean {
@@ -2158,7 +2173,7 @@ function collectVerifiedCodexMetadataCacheKeys(entries: Record<string, CacheEntr
 }
 
 function isCompleteCodexAgentMetadataCache(
-  cache: CacheFileV9,
+  cache: CacheFileV10,
   entries: Record<string, CacheEntryV1>,
   index: HistoryIndex,
 ): boolean {

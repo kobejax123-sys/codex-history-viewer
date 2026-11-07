@@ -137,6 +137,7 @@ export class HistoryTreeDataProvider implements vscode.TreeDataProvider<TreeNode
   private projectGrouped: boolean;
   private sourceFilter: SessionSourceFilter;
   private tagFilter: string[];
+  private modelFilter: string | null;
   private compressionFilter: HistoryCompressionFilter = "all";
   private displayTarget: HistoryDisplayTarget;
   private sortOrder: HistorySortOrder;
@@ -167,6 +168,7 @@ export class HistoryTreeDataProvider implements vscode.TreeDataProvider<TreeNode
     projectGrouped: boolean,
     sourceFilter: SessionSourceFilter,
     tagFilter: readonly string[],
+    modelFilter: string | null,
     displayTarget: HistoryDisplayTarget,
     codexAgentRunsOrExtensionUri: CodexAgentRunsService | vscode.Uri,
     sessionIconResolverOrProjectSelection?: SessionIconResolver | ProjectSelection,
@@ -187,6 +189,7 @@ export class HistoryTreeDataProvider implements vscode.TreeDataProvider<TreeNode
     this.projectGrouped = projectGrouped;
     this.sourceFilter = normalizeSourceFilter(sourceFilter);
     this.tagFilter = normalizeTagFilter(tagFilter);
+    this.modelFilter = normalizeModelFilter(modelFilter);
     this.displayTarget = displayTarget;
     if (isCodexAgentRunsService(codexAgentRunsOrExtensionUri)) {
       this.codexAgentRuns = codexAgentRunsOrExtensionUri;
@@ -273,6 +276,11 @@ export class HistoryTreeDataProvider implements vscode.TreeDataProvider<TreeNode
 
   public setTagFilter(tags: readonly string[]): void {
     this.tagFilter = normalizeTagFilter(tags);
+    this.clearSessionDerivedCaches();
+  }
+
+  public setModelFilter(modelFilter: string | null): void {
+    this.modelFilter = normalizeModelFilter(modelFilter);
     this.clearSessionDerivedCaches();
   }
 
@@ -431,7 +439,16 @@ export class HistoryTreeDataProvider implements vscode.TreeDataProvider<TreeNode
   }
 
   private matchesSessionWithoutDate(session: SessionSummary): boolean {
-    return matchesHistoryCompression(session.fsPath, this.compressionFilter) && this.matchesArchiveVisibility(session) && this.matchesProject(session) && this.matchesSource(session) && this.matchesTags(session);
+    return matchesHistoryCompression(session.fsPath, this.compressionFilter) &&
+      this.matchesArchiveVisibility(session) &&
+      this.matchesProject(session) &&
+      this.matchesSource(session) &&
+      this.matchesTags(session) &&
+      this.matchesModel(session);
+  }
+
+  private matchesModel(session: SessionSummary): boolean {
+    return this.modelFilter === null || session.models.includes(this.modelFilter);
   }
 
   private matchesSource(session: SessionSummary): boolean {
@@ -1219,6 +1236,12 @@ function normalizeTagFilter(values: readonly string[]): string[] {
 
 function normalizeTagKey(value: string): string {
   return String(value ?? "").trim().toLowerCase();
+}
+
+function normalizeModelFilter(value: string | null): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, 80) : null;
 }
 
 function normalizeSourceFilter(value: SessionSourceFilter): SessionSourceFilter {

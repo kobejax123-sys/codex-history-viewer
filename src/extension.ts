@@ -312,6 +312,7 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
   const HISTORY_PROJECT_SCOPE_KEY = "codexHistoryViewer.historyProjectScope.v1";
   const HISTORY_SOURCE_FILTER_KEY = "codexHistoryViewer.historySourceFilter.v1";
   const HISTORY_TAG_FILTER_KEY = "codexHistoryViewer.historyTagFilter.v1";
+  const HISTORY_MODEL_FILTER_KEY = "codexHistoryViewer.historyModelFilter.v1";
   const PINNED_FILTER_KEY = "codexHistoryViewer.pinnedFilter.v1";
   const PINNED_SOURCE_FILTER_KEY = "codexHistoryViewer.pinnedSourceFilter.v1";
   const PINNED_PROJECT_FILTER_KEY = "codexHistoryViewer.pinnedProjectFilter.v1";
@@ -651,6 +652,9 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
     config,
   );
   let historyTagFilter: string[] = sanitizeTagFilter(context.workspaceState.get(HISTORY_TAG_FILTER_KEY));
+  let historyModelFilter: string | null = sanitizeHistoryModelFilter(
+    context.workspaceState.get(HISTORY_MODEL_FILTER_KEY),
+  );
   let historyCompressionFilter: HistoryCompressionFilter = "all";
   let pinnedFilter: DateScope = sanitizeDateScope(context.workspaceState.get(PINNED_FILTER_KEY));
   const pinnedSourceFilterRaw = context.workspaceState.get(PINNED_SOURCE_FILTER_KEY);
@@ -842,6 +846,7 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
     historyProjectDisplay === "project",
     historySourceFilter,
     historyTagFilter,
+    historyModelFilter,
     resolveEffectiveHistoryDisplayTarget(
       historyDisplayTarget,
       historySourceFilter,
@@ -1074,6 +1079,24 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
     return t("history.filter.sourceLabel", sourceLabel);
   };
 
+  const getHistoryModelNames = (): Set<string> => {
+    const models = new Set<string>();
+    for (const session of historyService.getIndex().sessions) {
+      for (const model of session.models) models.add(model);
+    }
+    return models;
+  };
+
+  const resolveHistoryModelFilter = (): string | null => {
+    if (!historyModelFilter) return null;
+    return getHistoryModelNames().has(historyModelFilter) ? historyModelFilter : null;
+  };
+
+  const buildHistoryModelFilterSummary = (): string => {
+    const model = resolveHistoryModelFilter();
+    return model ? t("history.filter.modelLabel", model) : "";
+  };
+
   const buildHistoryDisplayTargetSummary = (): string => {
     const value = resolveEffectiveHistoryDisplayTargetValue();
     if (value === "activeVisible") return "";
@@ -1187,6 +1210,8 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
     if (sourceSummary) parts.push(sourceSummary);
     const displayTargetSummary = buildHistoryDisplayTargetSummary();
     if (displayTargetSummary) parts.push(displayTargetSummary);
+    const modelSummary = buildHistoryModelFilterSummary();
+    if (modelSummary) parts.push(modelSummary);
     if (historyTagFilter.length > 0) parts.push(t("tree.filter.tags", historyTagFilter.map((tag) => `#${tag}`).join(", ")));
     if (historyCompressionFilter !== "all") parts.push(t(`history.filter.compression.${historyCompressionFilter}`));
     return parts.join(" / ");
@@ -1612,6 +1637,11 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
     ].filter(Boolean).join("  ");
     void vscode.commands.executeCommand("setContext", "codexHistoryViewer.historyFiltered", filterSummary.length > 0);
     void vscode.commands.executeCommand("setContext", "codexHistoryViewer.historyTagFiltered", historyTagFilter.length > 0);
+    void vscode.commands.executeCommand(
+      "setContext",
+      "codexHistoryViewer.historyModelFiltered",
+      resolveHistoryModelFilter() !== null,
+    );
     void vscode.commands.executeCommand("setContext", "codexHistoryViewer.historyViewMode", historyViewMode);
     void vscode.commands.executeCommand("setContext", "codexHistoryViewer.historySortOrder", historySortOrder);
     void vscode.commands.executeCommand("setContext", "codexHistoryViewer.historyCompressionFilter", historyCompressionFilter);
@@ -2056,6 +2086,7 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
       historyTagFilter,
       resolveEffectiveHistoryDisplayTargetValue(),
     );
+    historyProvider.setModelFilter(resolveHistoryModelFilter());
     historyProvider.setCompressionFilter(historyCompressionFilter);
     historyProvider.setProjectGrouped(historyProjectDisplay === "project");
     syncArchiveLocationFilterToProviders();
@@ -2235,6 +2266,19 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
       ...opts,
       projectScopePolicy,
     });
+  };
+
+  const setHistoryModelFilter = async (model: string | null, opts: { persist: boolean }): Promise<void> => {
+    const normalized = sanitizeHistoryModelFilter(model);
+    if (normalized === historyModelFilter) return;
+    historyModelFilter = normalized;
+    historyProvider.setModelFilter(normalized);
+    historyProvider.refresh();
+    updateHistoryViewDescription();
+    statusProvider.refresh();
+    if (opts.persist) {
+      await context.workspaceState.update(HISTORY_MODEL_FILTER_KEY, normalized);
+    }
   };
 
   const resolveSourceFilterFromEnabledStates = (codexEnabled: boolean, claudeEnabled: boolean): SessionSourceFilter => {
@@ -3910,6 +3954,15 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
         },
       );
       return;
+    }
+    if (historyModelFilter !== null) {
+      const modelNames = getHistoryModelNames();
+      if (modelNames.size > 0 && !modelNames.has(historyModelFilter)) {
+        historyModelFilter = null;
+        historyProvider.setModelFilter(null);
+        void context.workspaceState.update(HISTORY_MODEL_FILTER_KEY, null);
+        updateHistoryViewDescription();
+      }
     }
     syncProjectScopeFiltersToProviders();
     pinnedProvider.refresh();
@@ -7448,6 +7501,7 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
         tags: [],
         displayTarget: "activeVisible",
       }, { persist: true, rerunSearch: true, projectScopePolicy: "clear" });
+      await setHistoryModelFilter(null, { persist: true });
     }),
   );
 
@@ -7509,6 +7563,50 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
   context.subscriptions.push(
     vscode.commands.registerCommand("codexHistoryViewer.clearHistoryTagFilter", async () => {
       await applyHistoryFilters({ tags: [] }, { persist: true });
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("codexHistoryViewer.filterHistoryByModel", async () => {
+      const counts = new Map<string, number>();
+      for (const session of historyService.getIndex().sessions) {
+        for (const model of session.models) counts.set(model, (counts.get(model) ?? 0) + 1);
+      }
+      const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+      if (sorted.length === 0) {
+        void vscode.window.showInformationMessage(t("history.modelFilter.noModels"));
+        return;
+      }
+
+      const items: Array<{ label: string; description: string; model: string | null }> = sorted.map(
+        ([model, count]) => ({
+          label: model,
+          description: t("history.modelFilter.sessionCount", count),
+          model,
+        }),
+      );
+      const activeModel = resolveHistoryModelFilter();
+      if (activeModel) {
+        items.unshift({
+          label: t("history.modelFilter.clear"),
+          description: t("history.modelFilter.clearDescription"),
+          model: null,
+        });
+      }
+
+      const picked = await vscode.window.showQuickPick(items, {
+        title: t("history.modelFilter.title"),
+        placeHolder: t("history.modelFilter.placeholder"),
+        matchOnDescription: true,
+      });
+      if (!picked) return;
+      await setHistoryModelFilter(picked.model, { persist: true });
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("codexHistoryViewer.clearHistoryModelFilter", async () => {
+      await setHistoryModelFilter(null, { persist: true });
     }),
   );
 
@@ -8542,6 +8640,11 @@ function sanitizeTagFilter(value: unknown): string[] {
     out.push(tag);
   }
   return out;
+}
+
+function sanitizeHistoryModelFilter(value: unknown): string | null {
+  const model = typeof value === "string" ? value.trim() : "";
+  return model ? model.slice(0, 80) : null;
 }
 
 function sanitizeHistorySourceFilter(value: unknown): SessionSourceFilter {

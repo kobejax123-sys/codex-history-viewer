@@ -1397,6 +1397,40 @@
       }
     },
     {
+      "expandLocales": false,
+      "value": {
+        "command": "codexHistoryViewer.filterHistoryByModel",
+        "title": "%cmd.filterHistoryByModel%",
+        "category": "%cmd.category%",
+        "icon": "$(sparkle)"
+      }
+    },
+    {
+      "expandLocales": false,
+      "value": {
+        "command": "codexHistoryViewer.clearHistoryModelFilter",
+        "title": "%cmd.clearHistoryModelFilter%",
+        "category": "%cmd.category%",
+        "icon": "$(clear-all)"
+      }
+    },
+    {
+      "expandLocales": true,
+      "titleKey": "ui.command.filterHistoryByModel",
+      "value": {
+        "command": "codexHistoryViewer.ui.{locale}.filterHistoryByModel",
+        "icon": "$(sparkle)"
+      }
+    },
+    {
+      "expandLocales": true,
+      "titleKey": "ui.command.clearHistoryModelFilter",
+      "value": {
+        "command": "codexHistoryViewer.ui.{locale}.clearHistoryModelFilter",
+        "icon": "$(clear-all)"
+      }
+    },
+    {
       "expandLocales": true,
       "titleKey": "ui.command.historyViewLatestCurrent",
       "value": {
@@ -4673,6 +4707,38 @@
       }
     },
     {
+      "expandLocales": true,
+      "menu": "commandPalette",
+      "value": {
+        "command": "codexHistoryViewer.ui.{locale}.filterHistoryByModel",
+        "when": "false"
+      }
+    },
+    {
+      "expandLocales": true,
+      "menu": "commandPalette",
+      "value": {
+        "command": "codexHistoryViewer.ui.{locale}.clearHistoryModelFilter",
+        "when": "false"
+      }
+    },
+    {
+      "expandLocales": false,
+      "menu": "commandPalette",
+      "value": {
+        "command": "codexHistoryViewer.filterHistoryByModel",
+        "when": "false"
+      }
+    },
+    {
+      "expandLocales": false,
+      "menu": "commandPalette",
+      "value": {
+        "command": "codexHistoryViewer.clearHistoryModelFilter",
+        "when": "false"
+      }
+    },
+    {
       "expandLocales": false,
       "menu": "commandPalette",
       "value": {
@@ -5455,6 +5521,24 @@
         "command": "codexHistoryViewer.ui.{locale}.clearHistoryTagFilter",
         "when": "view == codexHistoryViewer.historyView && codexHistoryViewer.historyTagFiltered && {localeCondition}",
         "group": "navigation@8"
+      }
+    },
+    {
+      "expandLocales": true,
+      "menu": "view/title",
+      "value": {
+        "command": "codexHistoryViewer.ui.{locale}.filterHistoryByModel",
+        "when": "view == codexHistoryViewer.historyView && {localeCondition}",
+        "group": "navigation@7.5"
+      }
+    },
+    {
+      "expandLocales": true,
+      "menu": "view/title",
+      "value": {
+        "command": "codexHistoryViewer.ui.{locale}.clearHistoryModelFilter",
+        "when": "view == codexHistoryViewer.historyView && codexHistoryViewer.historyModelFiltered && {localeCondition}",
+        "group": "navigation@8.1"
       }
     },
     {
@@ -7068,6 +7152,16 @@
       "expandLocales": true,
       "id": "codexHistoryViewer.ui.{locale}.clearHistoryTagFilter",
       "target": "codexHistoryViewer.clearHistoryTagFilter"
+    },
+    {
+      "expandLocales": true,
+      "id": "codexHistoryViewer.ui.{locale}.filterHistoryByModel",
+      "target": "codexHistoryViewer.filterHistoryByModel"
+    },
+    {
+      "expandLocales": true,
+      "id": "codexHistoryViewer.ui.{locale}.clearHistoryModelFilter",
+      "target": "codexHistoryViewer.clearHistoryModelFilter"
     },
     {
       "expandLocales": true,

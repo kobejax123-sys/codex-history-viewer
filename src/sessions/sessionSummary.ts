@@ -338,6 +338,18 @@ interface PhysicalSessionSummaryScan {
   readonly claudeLastActivityTimestampIso?: string;
   readonly claudeNativeTitle?: string;
   readonly previewMessages: PreviewMessage[];
+  readonly models: string[];
+}
+
+const MODEL_NAME_MAX_LENGTH = 80;
+
+// Prefer the model reported per message so history filtering matches what the session view shows.
+function normalizeSessionModelName(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.replace(/[<>]/g, "").trim().toLowerCase() === "synthetic") return undefined;
+  return trimmed.slice(0, MODEL_NAME_MAX_LENGTH);
 }
 
 async function scanPhysicalSessionSummary(
@@ -353,6 +365,7 @@ async function scanPhysicalSessionSummary(
   const claudeMeta: SessionMetaInfo = { historySource: "claude" };
   const previewMessages: PreviewMessage[] = [];
   const previewLineIndices: number[] = [];
+  const models = new Set<string>();
   const rollbackTracker = new CodexRollbackTracker();
   const isCodexPath = path.basename(fsPath).toLowerCase().startsWith("rollout-");
   let physicalLineIndex = 0;
@@ -432,6 +445,16 @@ async function scanPhysicalSessionSummary(
       const renameTitle = extractClaudeRenameTitle(obj);
       if (renameTitle) claudeRenameTitle = renameTitle;
 
+      // Model names are collected across the whole file, before preview truncation.
+      if (obj?.type === "turn_context" && obj.payload && typeof obj.payload === "object") {
+        const model = normalizeSessionModelName((obj.payload as Record<string, unknown>).model);
+        if (model) models.add(model);
+      }
+      if (detectClaudeMessageRole(obj) === "assistant") {
+        const model = normalizeSessionModelName(obj?.message?.model ?? obj?.model);
+        if (model) models.add(model);
+      }
+
       if (!(previewMessages.length >= maxMessages)) {
         await appendPreviewMessage(obj, pastedPromptResolver, previewMessages);
         while (previewLineIndices.length < previewMessages.length) previewLineIndices.push(physicalLineIndex);
@@ -449,6 +472,7 @@ async function scanPhysicalSessionSummary(
     ...(claudeLastActivityTimestampIso ? { claudeLastActivityTimestampIso } : {}),
     ...(claudeNativeTitle ? { claudeNativeTitle } : {}),
     previewMessages,
+    models: [...models].sort((a, b) => a.localeCompare(b)),
   };
 }
 
@@ -633,6 +657,7 @@ export async function buildSessionSummary(params: {
     displayTitle: snippet,
     cwdShort,
     previewMessages,
+    models: scan.models,
   };
 }
 

@@ -1311,6 +1311,38 @@
         "title": "%generated.ui.en.command.clearHistoryTagFilter%"
       },
       {
+        "command": "codexHistoryViewer.filterHistoryByModel",
+        "title": "%cmd.filterHistoryByModel%",
+        "category": "%cmd.category%",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "codexHistoryViewer.clearHistoryModelFilter",
+        "title": "%cmd.clearHistoryModelFilter%",
+        "category": "%cmd.category%",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "codexHistoryViewer.ui.ja.filterHistoryByModel",
+        "icon": "$(sparkle)",
+        "title": "%generated.ui.ja.command.filterHistoryByModel%"
+      },
+      {
+        "command": "codexHistoryViewer.ui.en.filterHistoryByModel",
+        "icon": "$(sparkle)",
+        "title": "%generated.ui.en.command.filterHistoryByModel%"
+      },
+      {
+        "command": "codexHistoryViewer.ui.ja.clearHistoryModelFilter",
+        "icon": "$(clear-all)",
+        "title": "%generated.ui.ja.command.clearHistoryModelFilter%"
+      },
+      {
+        "command": "codexHistoryViewer.ui.en.clearHistoryModelFilter",
+        "icon": "$(clear-all)",
+        "title": "%generated.ui.en.command.clearHistoryModelFilter%"
+      },
+      {
         "command": "codexHistoryViewer.ui.ja.historyViewLatestCurrent",
         "icon": "$(history)",
         "title": "%generated.ui.ja.command.historyViewLatestCurrent%"
@@ -4182,6 +4214,30 @@
           "when": "false"
         },
         {
+          "command": "codexHistoryViewer.ui.ja.filterHistoryByModel",
+          "when": "false"
+        },
+        {
+          "command": "codexHistoryViewer.ui.en.filterHistoryByModel",
+          "when": "false"
+        },
+        {
+          "command": "codexHistoryViewer.ui.ja.clearHistoryModelFilter",
+          "when": "false"
+        },
+        {
+          "command": "codexHistoryViewer.ui.en.clearHistoryModelFilter",
+          "when": "false"
+        },
+        {
+          "command": "codexHistoryViewer.filterHistoryByModel",
+          "when": "false"
+        },
+        {
+          "command": "codexHistoryViewer.clearHistoryModelFilter",
+          "when": "false"
+        },
+        {
           "command": "codexHistoryViewer.clearHistoryTagFilter",
           "when": "false"
         },
@@ -5032,6 +5088,26 @@
           "command": "codexHistoryViewer.ui.en.clearHistoryTagFilter",
           "when": "view == codexHistoryViewer.historyView && codexHistoryViewer.historyTagFiltered && (codexHistoryViewer.uiLang != 'ja')",
           "group": "navigation@8"
+        },
+        {
+          "command": "codexHistoryViewer.ui.ja.filterHistoryByModel",
+          "when": "view == codexHistoryViewer.historyView && (codexHistoryViewer.uiLang == 'ja')",
+          "group": "navigation@7.5"
+        },
+        {
+          "command": "codexHistoryViewer.ui.en.filterHistoryByModel",
+          "when": "view == codexHistoryViewer.historyView && (codexHistoryViewer.uiLang != 'ja')",
+          "group": "navigation@7.5"
+        },
+        {
+          "command": "codexHistoryViewer.ui.ja.clearHistoryModelFilter",
+          "when": "view == codexHistoryViewer.historyView && codexHistoryViewer.historyModelFiltered && (codexHistoryViewer.uiLang == 'ja')",
+          "group": "navigation@8.1"
+        },
+        {
+          "command": "codexHistoryViewer.ui.en.clearHistoryModelFilter",
+          "when": "view == codexHistoryViewer.historyView && codexHistoryViewer.historyModelFiltered && (codexHistoryViewer.uiLang != 'ja')",
+          "group": "navigation@8.1"
         },
         {
           "command": "codexHistoryViewer.ui.ja.searchRerun",

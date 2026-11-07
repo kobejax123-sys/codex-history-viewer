@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
   "files": {
-    "l10n/bundle.l10n.ja.json": "51fcf3ef4c8bc8308748498dabcdc5588a8ccab5ba3f7d5f01713d33b3b5f178",
-    "package.nls.ja.json": "2e28caa2755d416d9e840f8e1c2fbf0abee72d73d7bd647b9bf1308c0b115b2a",
-    "l10n/bundle.l10n.json": "b699cfd3d0b74c88f84f9adf7046508f1a9a0a1a6cfc639b6ae7de483e0ba564",
-    "package.nls.en.json": "e3e2839b604e5be0f769e9637365279d885e3244644cbaadadf0d1353b7f9a77",
-    "package.nls.json": "e3e2839b604e5be0f769e9637365279d885e3244644cbaadadf0d1353b7f9a77",
-    "src/generated/localeCatalog.ts": "4f91f4e920500a8a480d966d4f30892d0ac618aecfcb5464784e63a9cf3910c1",
-    "src/generated/defaultRuntimeMessages.ts": "42505958d998e8d2e40f310fc4915eda1c8fe2650f4ec5c9a0f3de1cfb0ae6b9",
-    "src/generated/uiCommandAliases.ts": "a26347a9a023d8ffbc5e442d0b159a63b2fe6da59083a5fce82bdb96c60727f2",
+    "l10n/bundle.l10n.ja.json": "44e7bf769bee55c7d9ca98fb603e42d983f4e073b9c696f5ea0a84c79c1893f5",
+    "package.nls.ja.json": "4e532d4a3c16024f2726c0649d1a7389797bdf11dccbd62643922c1e1a72fb44",
+    "l10n/bundle.l10n.json": "5d119821aa56db1bdfca99efa4983053e8cfbf251cab3b2a91d730271a240821",
+    "package.nls.en.json": "b9ff1c35b3de2277dabad11b3d707da8afecd3ade422a0a90963245cbf3c87a6",
+    "package.nls.json": "b9ff1c35b3de2277dabad11b3d707da8afecd3ade422a0a90963245cbf3c87a6",
+    "src/generated/localeCatalog.ts": "6baf953f112d7c8fda3f00ad649c6b9032f1adfcbf6e814fe6926c0ac107f40e",
+    "src/generated/defaultRuntimeMessages.ts": "105cee4f260c3a522e2b500ce15908c455a3ac25ee3dfeb6c5486b383e437746",
+    "src/generated/uiCommandAliases.ts": "7a576c35b79ec97336b6b302ab16dfdc49245e468e27db5f8eb9da08d48b18b2",
     "src/generated/webviewI18n.ts": "224da05eaa7309036e61981b04da20a4d42dea6a12bc3ac8c2cd755ff7042d71",
-    "media/generated/localization.js": "13624df11e1e43685b2c4c9233c08389bd9efcda8ab8ffdce3335289c6d10e70"
+    "media/generated/localization.js": "7d410039c297890d103024ee3bf9b4901236421dd6557da857015ac3e1d3ab50"
   },
-  "packageHash": "925e726b5c21961abd66e3467f16ccde25fceb441e60e092d22dc72e015efdcd"
+  "packageHash": "a7b454ff8cc190d1fb84fda7c1a2f73b910edca5044245dd0bd55a8a3ddf8c0b"
 }

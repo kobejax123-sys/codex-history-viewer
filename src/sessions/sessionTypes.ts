@@ -103,6 +103,7 @@ export interface SessionSummary {
   displayTitle: string;
   cwdShort: string;
   previewMessages: PreviewMessage[];
+  models: string[];
 }
 
 export interface HistoryIndex {

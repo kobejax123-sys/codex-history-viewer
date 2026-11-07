@@ -1,4 +1,4 @@
-export const HISTORY_CACHE_FILE_NAME = "cache.v9.json";
+export const HISTORY_CACHE_FILE_NAME = "cache.v10.json";
 export const SEARCH_INDEX_FILE_NAME = "search-index.v2.json";
 export const SESSION_ANALYSIS_INDEX_FILE_NAME = "session-analysis-index.v1.json";
 
