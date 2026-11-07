@@ -2385,6 +2385,7 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
       const chatOpenPositionChanged = e.affectsConfiguration("codexHistoryViewer.chat.openPosition");
       const chatPerformanceModeChanged = e.affectsConfiguration("codexHistoryViewer.chat.performanceMode");
       const chatTurnTimelineModeChanged = e.affectsConfiguration("codexHistoryViewer.chat.turnTimeline.mode");
+      const showClaudeProgressChanged = e.affectsConfiguration("codexHistoryViewer.chat.showClaudeProgress");
       const toolDisplayModeChanged = e.affectsConfiguration("codexHistoryViewer.chat.toolDisplayMode");
       const userLongMessageFoldingChanged = e.affectsConfiguration("codexHistoryViewer.chat.userLongMessageFolding");
       const assistantLongMessageFoldingChanged = e.affectsConfiguration(
@@ -2420,6 +2421,7 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
         !chatOpenPositionChanged &&
         !chatPerformanceModeChanged &&
         !chatTurnTimelineModeChanged &&
+        !showClaudeProgressChanged &&
         !toolDisplayModeChanged &&
         !longMessageFoldingChanged &&
         !imagesChanged &&
@@ -2481,7 +2483,7 @@ async function activateExtension(context: vscode.ExtensionContext, startup: View
       updateHistoryViewDescription();
       updateSearchViewDescription();
       void autoRefreshService?.configure(getConfig(), computeAutoRefreshConsumerVisible(), vscode.window.state.focused);
-      if (chatTurnTimelineModeChanged || toolDisplayModeChanged || longMessageFoldingChanged || imagesChanged) chatPanels.refreshPanels();
+      if (chatTurnTimelineModeChanged || showClaudeProgressChanged || toolDisplayModeChanged || longMessageFoldingChanged || imagesChanged) chatPanels.refreshPanels();
       else chatPanels.refreshI18n();
       if (nativeBookmarksChanged || timeGuideChanged || sourcesEnabledChanged) chatPanels.refreshNativeBookmarks();
       if (uiLanguageChanged || resumeMethodChanged) chatPanels.refreshResumePresentation();

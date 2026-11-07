@@ -76,6 +76,7 @@ export interface CodexHistoryViewerConfig {
   userLongMessageFolding: LongMessageFoldingMode;
   assistantLongMessageFolding: LongMessageFoldingMode;
   stickyUserPrompt: boolean;
+  showClaudeProgress: boolean;
   chatTurnTimelineMode: ChatTurnTimelineMode;
   timeGuideEnabled: boolean;
 }
@@ -276,6 +277,7 @@ export function getConfig(): CodexHistoryViewerConfig {
     userLongMessageFolding,
     assistantLongMessageFolding,
     stickyUserPrompt: cfg.get<boolean>("chat.stickyUserPrompt") ?? true,
+    showClaudeProgress: cfg.get<boolean>("chat.showClaudeProgress") ?? true,
     chatTurnTimelineMode: parseChatTurnTimelineMode(cfg.get<string>("chat.turnTimeline.mode") ?? "off"),
     timeGuideEnabled: cfg.get<boolean>("ui.timeGuide.enabled") ?? false,
   };

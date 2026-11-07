@@ -3817,6 +3817,7 @@ export class ChatPanelManager implements vscode.Disposable {
         images: config.images,
         includeDetails: detailMode === "full",
         includeNotificationDetails: true,
+        includeClaudeProgress: config.showClaudeProgress,
         turnTimelineMode: config.chatTurnTimelineMode,
         sessionInventory: inventory,
         ...(historyPlan ? { historyPlan } : {}),

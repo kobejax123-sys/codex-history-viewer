@@ -6615,6 +6615,13 @@
           "scope": "application",
           "order": 105
         },
+        "codexHistoryViewer.chat.showClaudeProgress": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cfg.chatShowClaudeProgress%",
+          "scope": "application",
+          "order": 106
+        },
         "codexHistoryViewer.chat.turnTimeline.mode": {
           "type": "string",
           "default": "off",
@@ -6635,7 +6642,7 @@
           ],
           "description": "%cfg.chatTurnTimelineMode%",
           "scope": "window",
-          "order": 106
+          "order": 107
         },
         "codexHistoryViewer.images.enabled": {
           "type": "boolean",

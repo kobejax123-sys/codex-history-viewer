@@ -327,6 +327,9 @@ export const SETTINGS_DEFINITIONS: readonly SettingsDefinition[] = [
   definition("chat.stickyUserPrompt", "session", "session.content", "switch", "application", true, {
     applyTiming: "sessionReload"
   }),
+  definition("chat.showClaudeProgress", "session", "session.content", "switch", "application", true, {
+    applyTiming: "sessionReload"
+  }),
   definition(
     "chat.performanceMode",
     "session",

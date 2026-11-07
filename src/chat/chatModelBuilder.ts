@@ -112,6 +112,8 @@ export interface ChatSessionModelBuildOptions {
   images?: ImagesConfig;
   includeDetails?: boolean;
   includeNotificationDetails?: boolean;
+  // Claude thinking/narration cards are dropped when the user hides progress.
+  includeClaudeProgress?: boolean;
   turnTimelineMode?: ChatTurnTimelineMode;
   sessionInventory?: readonly SessionSummary[];
   historyPlan?: CodexLogicalHistoryPlan;
@@ -1214,7 +1216,8 @@ async function indexClaudeTimelineRecord(
   }
 
   // Progress has independent anchors; it must never renumber existing messages or diffs.
-  const progress = role === "assistant" ? extractClaudeProgress(obj, lineIndex) : [];
+  const progress = role === "assistant" && options.includeClaudeProgress !== false
+    ? extractClaudeProgress(obj, lineIndex) : [];
   const progressModelMeta = role === "assistant" ? extractClaudeMessageModelMeta(obj) : {};
   const firstVisibleProgress = progress.findIndex((entry) => entry.body || entry.kind === "redactedThinking");
   const appendProgress = (entry: (typeof progress)[number], index: number): void => {
