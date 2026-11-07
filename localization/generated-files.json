@@ -2,15 +2,19 @@
   "schemaVersion": 1,
   "files": {
     "l10n/bundle.l10n.ja.json": "d12093f04c9facaaeac69248e264d0beee838681b3d60f08d890c16de1ebcf88",
-    "package.nls.ja.json": "e06d3ec0a7dc09595200cf5e7d1e742c39b1105483a4175b901ecd730892dc6b",
+    "package.nls.ja.json": "8dc8daded18a38d8ee58666ad106436beef29440d209536a825333dd70878a77",
     "l10n/bundle.l10n.json": "2986f814e921105edf48216f5db3f88b50fdcc27a72dda4c94c0800d74db04a3",
-    "package.nls.en.json": "860d7a974767b75aae056f55b9369df65fcf8d2d20d282eed845f9b093c3f71c",
-    "package.nls.json": "860d7a974767b75aae056f55b9369df65fcf8d2d20d282eed845f9b093c3f71c",
-    "src/generated/localeCatalog.ts": "3091499ffaf405edbff74d90497cef27c912da5d30861c3903678942ec20c64a",
+    "package.nls.en.json": "539340c50a03fe5c895a26fb99abc63a891d92c62004f7aef53062a7d00c8396",
+    "package.nls.json": "539340c50a03fe5c895a26fb99abc63a891d92c62004f7aef53062a7d00c8396",
+    "l10n/bundle.l10n.zh.json": "0f7805bb4dd0dd66d31b87b968a086d90f87d810c16385ee326c333f3db1b4e7",
+    "package.nls.zh.json": "575da3404a9b06739fee6bb6602796276023237303a67e5ec46923e74f83f5f3",
+    "package.nls.zh-hans.json": "575da3404a9b06739fee6bb6602796276023237303a67e5ec46923e74f83f5f3",
+    "package.nls.zh-cn.json": "575da3404a9b06739fee6bb6602796276023237303a67e5ec46923e74f83f5f3",
+    "src/generated/localeCatalog.ts": "abfd676e8f196a0d2230d5c15890b3b5d82c37dd166c95b13ba59a3d513bb02b",
     "src/generated/defaultRuntimeMessages.ts": "9a111d1bb1899f871f03c6d39b8d31b72f0a2c399bc481505596b93cb603f4ca",
-    "src/generated/uiCommandAliases.ts": "7a576c35b79ec97336b6b302ab16dfdc49245e468e27db5f8eb9da08d48b18b2",
+    "src/generated/uiCommandAliases.ts": "a4b9485b33871a3fc43ef0dfe4f96accd198b3e184d8ea727e6710a013c7fa8c",
     "src/generated/webviewI18n.ts": "224da05eaa7309036e61981b04da20a4d42dea6a12bc3ac8c2cd755ff7042d71",
-    "media/generated/localization.js": "fbd7045913bab5f51790d01709c1249dc062e92d075a6ff220303689c0c819f9"
+    "media/generated/localization.js": "43bfa73ee9bf4a8bed85781dea9346a052577432c6613cf5378aa205a31f9988"
   },
-  "packageHash": "a7b454ff8cc190d1fb84fda7c1a2f73b910edca5044245dd0bd55a8a3ddf8c0b"
+  "packageHash": "38a27ebe55bc015a6b9ee474fa82fb32c247cc4fac5d163edf0e514a102096c8"
 }
