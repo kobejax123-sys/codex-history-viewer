@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.21.0] - 2026-11-07
+
+### Added
+
+- Added Simplified Chinese localization. Set `codexHistoryViewer.ui.language` to `zh`, or rely on the VS Code display language; `zh-hans` and `zh-cn` are accepted as aliases.
+- Added a model filter to the History view toolbar. The picker lists models actually used by sessions in descending session count, and the filter combines with source, tag, date, project, and compression filters.
+- Added a `chat.showClaudeProgress` setting (enabled by default) to hide the Claude Code thinking and progress cards.
+
+### Changed
+
+- Session messages and Claude Code thinking/progress cards now show the model and reasoning effort. Reasoning effort uses a theme link color, and `<synthetic>` placeholder models are filtered out.
+
 ## [2.20.0] - 2026-10-27
 
 ### Added

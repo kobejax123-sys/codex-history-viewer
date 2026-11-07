@@ -2,7 +2,7 @@
 
 Browse, search, organize, and resume past Codex CLI / Claude Code sessions through the official VS Code extensions or prepared CLI commands.
 
-Latest release: **2.20.0** (2026-10-27).
+Latest release: **2.21.0** (2026-11-07).
 
 ![Codex History Viewer screenshot](media/screenshot.png)
 
