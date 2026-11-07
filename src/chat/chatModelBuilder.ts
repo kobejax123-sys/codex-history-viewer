@@ -1215,6 +1215,7 @@ async function indexClaudeTimelineRecord(
 
   // Progress has independent anchors; it must never renumber existing messages or diffs.
   const progress = role === "assistant" ? extractClaudeProgress(obj, lineIndex) : [];
+  const progressModelMeta = role === "assistant" ? extractClaudeMessageModelMeta(obj) : {};
   const firstVisibleProgress = progress.findIndex((entry) => entry.body || entry.kind === "redactedThinking");
   const appendProgress = (entry: (typeof progress)[number], index: number): void => {
     const uuid = !text && attachments.length === 0 && index === firstVisibleProgress ? readClaudeMessageUuid(obj?.uuid) : undefined;
@@ -1222,6 +1223,7 @@ async function indexClaudeTimelineRecord(
       progressId: entry.progressId, body: entry.body,
       ...(entry.durationMs !== undefined ? { durationMs: entry.durationMs } : {}),
       ...(ts ? { timestampIso: ts } : {}), ...(turnId ? { turnId } : {}),
+      ...progressModelMeta,
       ...(uuid ? { claudeMessageUuid: uuid } : {}),
     });
     observeCodexItemTurn(claudeTurnState?.turnState, turnId, ts);
@@ -2363,7 +2365,15 @@ function toMessageModelMeta(meta: ChatMessageModelMeta): ChatMessageModelMeta {
 
 function extractClaudeMessageModelMeta(obj: any): ChatMessageModelMeta {
   const model = normalizeModelMetaValue(obj?.message?.model ?? obj?.model);
-  return model ? { model } : {};
+  const effort = normalizeModelMetaValue(obj?.effort);
+  return {
+    ...(model && !isSyntheticModelName(model) ? { model } : {}),
+    ...(effort ? { effort } : {}),
+  };
+}
+
+function isSyntheticModelName(value: string): boolean {
+  return value.replace(/[<>]/g, "").trim().toLowerCase() === "synthetic";
 }
 
 function normalizeModelMetaValue(value: unknown): string | undefined {

@@ -11026,6 +11026,24 @@
     return typeof value === "string" && /^cp-[a-f0-9]{32}$/.test(value) ? value : "";
   }
 
+  function appendModelMetaTags(container, item) {
+    if (!(container instanceof Element) || !item || typeof item !== "object") return;
+    const modelText = typeof item.model === "string" ? item.model.trim() : "";
+    if (modelText) {
+      const modelTag = el("span", { className: "tag model" });
+      modelTag.textContent = modelText;
+      modelTag.title = modelText;
+      container.appendChild(modelTag);
+    }
+    const effortText = typeof item.effort === "string" ? item.effort.trim() : "";
+    if (effortText) {
+      const effortTag = el("span", { className: "tag effort" });
+      effortTag.textContent = effortText;
+      effortTag.title = effortText;
+      container.appendChild(effortTag);
+    }
+  }
+
   function getClaudeProgressTitle(item) {
     return item.kind === "narration" ? i18n.claudeProgressNarration
       : item.kind === "redactedThinking" ? i18n.claudeProgressRedacted : i18n.claudeProgressThinking;
@@ -11126,6 +11144,7 @@
     // Thinking already has an accessible disclosure title in its summary.
     if (item.kind !== "thinking") tags.appendChild(el("span", { className: "tag claudeProgressTag", textContent: title }));
     if (item.timestampIso) tags.appendChild(el("span", { className: "tag", textContent: formatIsoYmdHms(item.timestampIso) }));
+    appendModelMetaTags(tags, item);
     header.appendChild(tags);
     const actions = el("div", { className: "cardHeaderActions" });
     appendBookmarkButton(actions, item);
@@ -11597,6 +11616,7 @@
       ts.title = item.timestampIso;
       metaTags.appendChild(ts);
     }
+    if (role === "assistant") appendModelMetaTags(metaTags, item);
     metaLine.appendChild(metaTags);
 
     const headerActions = el("div", { className: "messageNav cardHeaderActions" });

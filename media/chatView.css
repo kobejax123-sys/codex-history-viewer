@@ -33,6 +33,7 @@
   --chv-tool-bg: var(--vscode-notifications-background, rgba(128, 128, 128, 0.08));
   --chv-code-bg: var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.15));
   --chv-accent: var(--vscode-focusBorder);
+  --chv-effort-accent: var(--vscode-textLink-foreground, #3794ff);
   --chv-running-accent: color-mix(
     in srgb,
     var(--vscode-testing-iconPassed, #73c991) 74%,
@@ -4608,6 +4609,16 @@ body.vscode-high-contrast-light .patchDiffCode.shiki span {
   border-color: color-mix(in srgb, var(--vscode-textLink-foreground) 48%, var(--chv-border) 52%);
   background: color-mix(in srgb, var(--vscode-textLink-foreground) 10%, transparent);
   white-space: nowrap;
+}
+
+.tag.model {
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.tag.effort {
+  color: var(--chv-effort-accent);
+  border-color: color-mix(in srgb, var(--chv-effort-accent) 45%, var(--chv-border) 55%);
 }
 
 /* Arrow buttons used for message-to-message navigation. */

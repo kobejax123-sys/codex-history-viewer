@@ -310,6 +310,8 @@ export interface ChatClaudeProgressItem {
   kind: "narration" | "thinking" | "redactedThinking";
   progressId: string;
   body: string;
+  model?: string;
+  effort?: string;
   // Empty thinking with a duration is hidden timing metadata, not a card or bookmark target.
   durationMs?: number;
   timestampIso?: string;
